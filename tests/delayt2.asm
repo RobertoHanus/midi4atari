@@ -1,0 +1,1 @@
+   blk reloc main›      JSR delay›      JSR delay›      JSR delay›      JSR delay›      RTS››   icl 'delay'››   blk update addresses›   blk update symbols›   end›››››

@@ -1,1 +1,0 @@
-››AUDF1 equ $D200 * Audio 1 frequency›AUDC1 equ $D201 * Audio 1 control››blk reloc main›   JSR delay  ››   LDA #$E0›   STA AUDC1›   RTS››   icl 'a:>delay.asm'››   end›

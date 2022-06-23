@@ -1,1 +1,0 @@
-blk reloc main›delay  LDX #0›      LDY #0›delay_again_00 DEY›      BNE delay_again_00›      DEX›      BNE delay_again_00›      RTS›      end›››
