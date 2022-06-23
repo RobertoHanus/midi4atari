@@ -1,0 +1,1 @@
+AUDF1 equ $D200 * Audio 1 frequency›AUDC1 equ $D201 * Audio 1 control››blk reloc main›   LDA #121›   STA AUDF1    ›   LDA #$EF›   STA AUDC1››   LDX #0›   LDY #0›again1 DEY›   BNE again1›   DEX›   BNE again1››   LDA #108›   STA AUDF1    ›   LDA #$EF›   STA AUDC1››   LDX #0›   LDY #0›again2 DEY›   BNE again2›   DEX›   BNE again2››   LDA #$E0›   STA AUDC1›   RTS›   end›
