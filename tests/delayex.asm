@@ -1,0 +1,1 @@
+      blk reloc main›      LDY #$00›      LDX #$2›      LDA #$71›      JSR delay›      RTS››delay PHA›      LDA #0›      STA 18›      STA 19›      STA 20›      PLA›delay_y CPY 18›      BNE delay_y›delay_x  CPX 19›      BNE delay_x›delay_a CMP 20›      BNE delay_a›      RTS››      blk update addresses›     end›››››
