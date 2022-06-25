@@ -231,6 +231,10 @@ load_success
     LDA #>byte
     STA pointer+1
     JSR HPRINT
+; Print a EOL
+    LDA #$9B
+    JSR PUTC
+
 
 ; Point to memory block
     LDA block_pointer
@@ -252,6 +256,9 @@ load_success
     LDA #>word
     STA pointer+1
     JSR HPRINT
+; Print a EOL
+    LDA #$9B
+    JSR PUTC
 
 
 ; -------------------------
@@ -330,7 +337,7 @@ BIG2LTLWORD
     STA word+1
     RTS
 
-;BIG2LTLWORD
+;BIG2LTLDWORD
 ; This routine transforms big to
 ; little endian double word vaules.
 ; dword = double word value
