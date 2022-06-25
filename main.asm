@@ -185,7 +185,7 @@ load_success
 ; dword reg from big to little endian
     JSR BIG2LTLDWORD
 
-; Print memory content pointed
+; Print value of memory content pointed
     LDX #4
     LDA #<dword
     STA pointer
@@ -196,10 +196,12 @@ load_success
 
 ; Calculates BPOW of A
 ; and stores result on byte
-    LDA #8
-    JSR BPOW
+    LDA #$8F
+    JSR POWBYTE
     STX byte
-
+; Print a EOL
+    LDA #$9B
+    JSR PUTC
 ; Print byte hex value
     LDX #1
     LDY #0
@@ -300,8 +302,8 @@ BIG2LTLDWORD
     STX dword+1
     RTS
 
-;BPOW
-; Binary power.
+;POWBYTE
+; Binary power of a byte value.
 ; This routine takes value from
 ; acumulator A and returns on X
 ; the numer of binary digits
@@ -311,15 +313,38 @@ BIG2LTLDWORD
 ; Then BPOW returns X=3
 ; IF A == $0A (00001010b)
 ; Then BPOW returns X=3
-BPOW
+POWBYTE
     LDX #0
-BPOW_again
+POWBYTE_again
     CLC
     ROR
-    BEQ BPOW_exit
+    BEQ POWBYTE_exit
     INX
-    JMP BPOW_again
-BPOW_exit
+    JMP POWBYTE_again
+POWBYTE_exit
+    RTS
+
+;POWWORD
+; Binary power of a word value
+; stored on word register
+; Return result on accumulator.
+POWWORD
+    LDA word+1
+    LDX #0
+POWWORD_again_first_step
+    CLC
+    ROR
+    BEQ POWWORD_exit_first_step
+    INX
+    JMP POWWORD_again_first_step
+POWWORD_exit_first_step
+    ; if(x != 0) goto POWWORD_exit_on_msb
+    TXA
+    BNE POWWORD_exit_on_msb ; Exit on MSB
+    RTS  
+
+POWWORD_exit_on_msb
+    ADC #8
     RTS
 
 ; -------------------------
