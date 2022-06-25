@@ -55,8 +55,8 @@ header_chunk.id equ header_chunk ;double word
 header_chunk.length equ header_chunk.id + 4 ;double word
 header_chunk.file_format equ header_chunk.length + 4 ;word 
 header_chunk.tracks_number equ header_chunk.file_format + 2 ;word
-header_chunk.tracks_delta_time_ticks equ header_chunk.tracks_number + 2 ;word
-header_chunk.end equ header_chunk.tracks_delta_time_ticks + 2 ;zero
+header_chunk.tracks_delta_time_ticks_per_quarter equ header_chunk.tracks_number + 2 ;word
+header_chunk.end equ header_chunk.tracks_delta_time_ticks_per_quarter + 2 ;zero
 
 track_chunk equ header_chunk.end
 track_chunk.id equ track_chunk ;double word
@@ -156,8 +156,8 @@ save_memory_block LDA faux1
     dta c'Can''t load binary file on memory'
     dta b($9B,$00)
     RTS     
-
 load_success 
+
 ; Print memory content pointed
     LDX #2
     LDA block_pointer
@@ -231,6 +231,28 @@ load_success
     LDA #>byte
     STA pointer+1
     JSR HPRINT
+
+; Point to memory block
+    LDA block_pointer
+    STA pointer
+    LDA block_pointer+1
+    STA pointer+1
+; Loads word register with data pointed
+    LDY #header_chunk.tracks_delta_time_ticks_per_quarter
+    LDA (pointer),Y
+    STA word
+    INY
+    LDA (pointer),Y
+    STA word+1
+; Print word hex value
+    LDX #2
+    LDY #0
+    LDA #<word
+    STA pointer
+    LDA #>word
+    STA pointer+1
+    JSR HPRINT
+
 
 ; -------------------------
 ; Main program end
@@ -375,6 +397,8 @@ filename dta v(COMTAB+$21)
 ; -------------------------
 block_pointer dta a(0)
 block_size dta a(0)
+
+delta_time_ticks_per_quarter_pow dta a(0)
 
     blk update addresses
     blk update symbols
