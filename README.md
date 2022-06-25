@@ -1,3 +1,3 @@
 # MIDI4ATARI
 
-Application to play MIDI misuc files on ATARI 8Bits PC.
+Application to play MIDI music files on ATARI 8Bits PC.
