@@ -41,6 +41,7 @@ syscall equ $0787 ;byte
 ; -------------------------
 ; ($CB to $D1) unused by BASIC
 user_zero equ $CB ; ($CB, $CD, $CE, $CF, $D0, $D1)
+byte equ user_zero ;byte
 word equ user_zero ;word
 dword equ user_zero ;double word
 pointer equ user_zero+4 ;word
@@ -193,7 +194,24 @@ load_success
     LDY #0
     JSR HPRINT
 
+; Calculates BPOW of A
+; and stores result on byte
+    LDA #8
+    JSR BPOW
+    STX byte
+
+; Print byte hex value
+    LDX #1
+    LDY #0
+    LDA #<byte
+    STA pointer
+    LDA #>byte
+    STA pointer+1
+    JSR HPRINT
+
+; -------------------------
 ; Main program end
+; -------------------------
     RTS
 
 ; -------------------------
@@ -280,6 +298,28 @@ BIG2LTLDWORD
     LDX dword+2
     STA dword+2
     STX dword+1
+    RTS
+
+;BPOW
+; Binary power.
+; This routine takes value from
+; acumulator A and returns on X
+; the numer of binary digits
+; before last 1 binary digit.
+; Example:
+; IF A == $08 (00001000b)
+; Then BPOW returns X=3
+; IF A == $0A (00001010b)
+; Then BPOW returns X=3
+BPOW
+    LDX #0
+BPOW_again
+    CLC
+    ROR
+    BEQ BPOW_exit
+    INX
+    JMP BPOW_again
+BPOW_exit
     RTS
 
 ; -------------------------
