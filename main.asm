@@ -211,6 +211,27 @@ load_success
     STA pointer+1
     JSR HPRINT
 
+; Calculate POW of word register
+; value and stores result on 
+; byte register.
+    LDA #$08
+    STA word
+    LDA #$FF
+    STA word+1
+    JSR POWWORD
+    STA byte    
+; Print a EOL
+    LDA #$9B
+    JSR PUTC
+; Print byte hex value
+    LDX #1
+    LDY #0
+    LDA #<byte
+    STA pointer
+    LDA #>byte
+    STA pointer+1
+    JSR HPRINT
+
 ; -------------------------
 ; Main program end
 ; -------------------------
@@ -330,21 +351,16 @@ POWBYTE_exit
 ; Return result on accumulator.
 POWWORD
     LDA word+1
-    LDX #0
-POWWORD_again_first_step
-    CLC
-    ROR
-    BEQ POWWORD_exit_first_step
-    INX
-    JMP POWWORD_again_first_step
-POWWORD_exit_first_step
-    ; if(x != 0) goto POWWORD_exit_on_msb
+    BEQ POWWORD_lsb
+    JSR POWBYTE
     TXA
-    BNE POWWORD_exit_on_msb ; Exit on MSB
-    RTS  
-
-POWWORD_exit_on_msb
-    ADC #8
+    ADC #7
+    JMP POWWORD_exit
+POWWORD_lsb
+    LDA word
+    JSR POWBYTE
+    TXA
+POWWORD_exit
     RTS
 
 ; -------------------------
