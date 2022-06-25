@@ -37,9 +37,14 @@ faux4 equ $0785 ;word
 syscall equ $0787 ;byte
 
 ; -------------------------
-; Zero page indirect regs
+; User zero page registers
 ; -------------------------
-word_pointer equ $80 ;word
+; ($CB to $D1) unused by BASIC
+user_zero equ $CB ; ($CB, $CD, $CE, $CF, $D0, $D1)
+word equ user_zero ;word
+dword equ user_zero ;double word
+pointer equ user_zero+4 ;word
+
 
 ; -------------------------
 ; Structs
@@ -151,17 +156,37 @@ save_memory_block LDA faux1
     RTS     
 
 load_success 
-; Print memory content
+; Print memory content pointed
     LDX #2
     LDA block_pointer
-    STA word_pointer
+    STA pointer
     LDA block_pointer+1
-    STA word_pointer+1
+    STA pointer+1
     LDY #header_chunk.tracks_number
     JSR HPRINT
 
+; Loads word register with data pointed
+    LDY #0
+    LDA (pointer),Y
+    STA word
+    LDY #1
+    LDA (pointer),Y
+    STA word+1
     JSR FCLOSE
     RTS
+
+; Transforms word value stored in 
+; word reg from big to little endian
+    BIG2LTLWORD
+
+; Print memory content pointed
+    LDX #2
+    LDA block_pointer
+    STA pointer
+    LDA block_pointer+1
+    STA pointer+1
+    LDY #header_chunk.tracks_number
+    JSR HPRINT
 
 ; -------------------------
 ; Subroutines
@@ -188,7 +213,7 @@ DELAY_a CMP 20
 
 ; CPRINT
 ; This routine prints chars stored 
-; in memory on Big-endian format. 
+; in memory. 
 ; Uses zero page indirect addressing.
 ; $80 = Address LSB
 ; $81 = Addresa MSB
@@ -206,22 +231,48 @@ CPRINT
 ; This routine prints hex values stored 
 ; in memory on Big-endian format. 
 ; Uses zero page indirect addressing.
-; $80 = Address LSB
-; $81 = Addresa MSB
+; word_pointer = Address LSB
+; word_pointer+1 = Addresa MSB
 ; X = Length
 ; Y = Beginning (can be used with structs)
 HPRINT
-    LDA (word_pointer),Y
+    LDA (pointer),Y
     STA HPRINT_value
     JSR PRINTF
     dta c'%2x'
     dta b($00)
-    dta v(HPRINT_value)
+    dta v(value)
     INY
     DEX
-    BNE HPRINT
+    BNE BHPRINT
     RTS
 HPRINT_value dta a(0)
+
+;BIG2LTLWORD
+; This routine transforms big to
+; little endian word vaules.
+; word = word value
+BIG2LTLWORD
+    LDA word
+    LDX word+1
+    STX word
+    STA word+1
+    RTS
+
+;BIG2LTLWORD
+; This routine transforms big to
+; little endian double word vaules.
+; dword = double word value
+BIG2LTLDWORD
+    LDA dword
+    LDX dword+3
+    STA dword+3
+    STX dword
+    LDA dword+1
+    LDX dword+2
+    STA dword+2
+    STX dword+1
+    RTS
 
 ; -------------------------
 ; Variables 
