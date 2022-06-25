@@ -29,20 +29,32 @@ MALLOC smb 'MALLOC'
 ; -------------------------
 ; SpartaDOS X regs
 ; -------------------------
-fmode equ $0778 ;byte length
-fatr1 equ $0779 ;byte length
-fhandle equ $0760 ;byte length
-faux1 equ $0782 ;word length
-faux4 equ $0785 ;word length
-syscall equ $0787 ;byte length
+fmode equ $0778 ;byte
+fatr1 equ $0779 ;byte
+fhandle equ $0760 ;byte
+faux1 equ $0782 ;word
+faux4 equ $0785 ;word
+syscall equ $0787 ;byte
 
 ; -------------------------
-; Declarations
+; Zero page indirect regs
 ; -------------------------
+word_pointer equ $80 ;word
 
 ; -------------------------
 ; Structs
 ; -------------------------
+header_chunk equ 0 ;14 bytes 
+header_chunk.id equ header_chunk ;double word
+header_chunk.length equ header_chunk.id + 4 ;double word
+header_chunk.file_format equ header_chunk.length + 4 ;word 
+header_chunk.tracks_number equ header_chunk.file_format + 2 ;word
+header_chunk.tracks_delta_time_ticks equ header_chunk.tracks_number + 2 ;word
+header_chunk.end equ header_chunk.tracks_delta_time_ticks + 2 ;zero
+
+track_chunk equ header_chunk.end
+track_chunk.id equ track_chunk ;double word
+track_chunk.length equ track_chunk ;double word
 
 
 ; -------------------------
@@ -139,18 +151,14 @@ save_memory_block LDA faux1
     RTS     
 
 load_success 
-    LDX #4
+; Print memory content
+    LDX #2
     LDA block_pointer
-    STA $80
+    STA word_pointer
     LDA block_pointer+1
-    STA $81
-MPRINT
-    LDY #0
-MPRINT_again
-    LDA ($80),Y
-    JSR PUTC
-    DEX
-    BEQ MPRINT_again
+    STA word_pointer+1
+    LDY #header_chunk.tracks_number
+    JSR HPRINT
 
     JSR FCLOSE
     RTS
@@ -158,7 +166,7 @@ MPRINT_again
 ; -------------------------
 ; Subroutines
 ; -------------------------
-; Delay
+; DELAY
 ; This routine uses ATARI
 ; Real Time Clock registers.
 ; A = 1/60 seconds wait
@@ -177,6 +185,43 @@ DELAY_x  CPX 19
 DELAY_a CMP 20
     BNE DELAY_a
     RTS
+
+; CPRINT
+; This routine prints chars stored 
+; in memory on Big-endian format. 
+; Uses zero page indirect addressing.
+; $80 = Address LSB
+; $81 = Addresa MSB
+; X = Length
+; Y = Beginning (can be used with structs)
+CPRINT
+    LDA (word_pointer),Y
+    JSR PUTC
+    INY
+    DEX
+    BNE CPRINT
+    RTS
+
+; HPRINT
+; This routine prints hex values stored 
+; in memory on Big-endian format. 
+; Uses zero page indirect addressing.
+; $80 = Address LSB
+; $81 = Addresa MSB
+; X = Length
+; Y = Beginning (can be used with structs)
+HPRINT
+    LDA (word_pointer),Y
+    STA HPRINT_value
+    JSR PRINTF
+    dta c'%2x'
+    dta b($00)
+    dta v(HPRINT_value)
+    INY
+    DEX
+    BNE HPRINT
+    RTS
+HPRINT_value dta a(0)
 
 ; -------------------------
 ; Variables 
