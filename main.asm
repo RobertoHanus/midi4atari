@@ -148,6 +148,7 @@ save_memory_block LDA faux1
     LDA #$00 ;memory index
     STA syscall
     JSR FREAD
+    JSR FCLOSE
     BPL load_success
 ; Print error message
     JSR PRINTF
@@ -165,28 +166,35 @@ load_success
     LDY #header_chunk.tracks_number
     JSR HPRINT
 
-; Loads word register with data pointed
-    LDY #0
+; Loads dword register with data pointed
+    LDY #header_chunk.length
     LDA (pointer),Y
-    STA word
-    LDY #1
+    STA dword
+    INY
     LDA (pointer),Y
-    STA word+1
-    JSR FCLOSE
-    RTS
-
-; Transforms word value stored in 
-; word reg from big to little endian
-    BIG2LTLWORD
+    STA dword+1
+    INY
+    LDA (pointer),Y
+    STA dword+2
+    INY
+    LDA (pointer),Y
+    STA dword+3
+    
+; Transforms double word value stored in 
+; dword reg from big to little endian
+    JSR BIG2LTLDWORD
 
 ; Print memory content pointed
-    LDX #2
-    LDA block_pointer
+    LDX #4
+    LDA #<dword
     STA pointer
-    LDA block_pointer+1
+    LDA #>dword
     STA pointer+1
-    LDY #header_chunk.tracks_number
+    LDY #0
     JSR HPRINT
+
+; Main program end
+    RTS
 
 ; -------------------------
 ; Subroutines
@@ -220,7 +228,7 @@ DELAY_a CMP 20
 ; X = Length
 ; Y = Beginning (can be used with structs)
 CPRINT
-    LDA (word_pointer),Y
+    LDA (pointer),Y
     JSR PUTC
     INY
     DEX
@@ -231,8 +239,8 @@ CPRINT
 ; This routine prints hex values stored 
 ; in memory on Big-endian format. 
 ; Uses zero page indirect addressing.
-; word_pointer = Address LSB
-; word_pointer+1 = Addresa MSB
+; pointer = Address LSB
+; pointer+1 = Addresa MSB
 ; X = Length
 ; Y = Beginning (can be used with structs)
 HPRINT
@@ -241,10 +249,10 @@ HPRINT
     JSR PRINTF
     dta c'%2x'
     dta b($00)
-    dta v(value)
+    dta v(HPRINT_value)
     INY
     DEX
-    BNE BHPRINT
+    BNE HPRINT
     RTS
 HPRINT_value dta a(0)
 
