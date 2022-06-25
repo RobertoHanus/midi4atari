@@ -40,6 +40,10 @@ syscall equ $0787 ;byte length
 ; Declarations
 ; -------------------------
 
+; -------------------------
+; Structs
+; -------------------------
+
 
 ; -------------------------
 ; Main program
@@ -135,13 +139,18 @@ save_memory_block LDA faux1
     RTS     
 
 load_success 
+    LDX #4
     LDA block_pointer
     STA $80
     LDA block_pointer+1
     STA $81
+MPRINT
     LDY #0
+MPRINT_again
     LDA ($80),Y
     JSR PUTC
+    DEX
+    BEQ MPRINT_again
 
     JSR FCLOSE
     RTS
@@ -150,21 +159,23 @@ load_success
 ; Subroutines
 ; -------------------------
 ; Delay
+; This routine uses ATARI
+; Real Time Clock registers.
 ; A = 1/60 seconds wait
 ; X = 1/60 * 256 seconds wait
 ; Y = 1/60 * 256 * 256 seconds wait
-delay PHA
+DELAY PHA
     LDA #0
     STA 18
     STA 19
     STA 20
     PLA
-delay_y CPY 18
-    BNE delay_y
-delay_x  CPX 19
-    BNE delay_x
-delay_a CMP 20
-    BNE delay_a
+DELAY_y CPY 18
+    BNE DELAY_y
+DELAY_x  CPX 19
+    BNE DELAY_x
+DELAY_a CMP 20
+    BNE DELAY_a
     RTS
 
 ; -------------------------
