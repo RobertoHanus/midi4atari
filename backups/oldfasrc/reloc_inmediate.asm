@@ -60,8 +60,7 @@ header_chunk.end equ header_chunk.tracks_delta_time_ticks_per_quarter + 2 ;zero
 
 track_chunk equ header_chunk.end
 track_chunk.id equ track_chunk ;double word
-track_chunk.length equ track_chunk.id + 4 ;double word 
-track_chunk.data equ track_chunk.length + 4 ;double word 
+track_chunk.length equ track_chunk ;double word 
    
 ; -------------------------
 ; Main program
@@ -235,6 +234,7 @@ load_success
     LDA #$9B
     JSR PUTC
 
+
 ; Point to memory block
     LDA block_pointer
     STA pointer
@@ -247,39 +247,39 @@ load_success
     INY
     LDA (pointer),Y
     STA word+1
-; Transforms word to little endian
-    JSR BIG2LTLWORD
-; Stores word on ticks_per_quarter
+; Print word hex value
+    LDX #2
+    LDY #0
+    LDA #<word
+    STA pointer
+    LDA #>word
+    STA pointer+1
+    JSR HPRINT
+; Print a EOL
+    LDA #$9B
+    JSR PUTC
+
+    
     LDA word
-    STA ticks_per_quarter
+    STA var
     LDA word+1
-    STA ticks_per_quarter+1
+    STA var+1
 ; Print word hex value
     LDX #2
     LDY #0
-    LDA #<word
+    LDA #<(var+0x0FFD)
     STA pointer
-    LDA #>word
+    LDA #>(var+0x0FFD)
     STA pointer+1
     JSR HPRINT
 ; Print a EOL
     LDA #$9B
     JSR PUTC
 
-; Point to memory block
-    LDA block_pointer
-    STA pointer
-    LDA block_pointer+1
-    STA pointer+1
-; Loads word register with data pointed
-    LDY #track_chunk
-    LDA (pointer),Y
+    LDA #<var
     STA word
-    INY
-    LDA (pointer),Y
+    LDA #>var
     STA word+1
-; Transforms word to little endian
-    JSR BIG2LTLWORD
 ; Print word hex value
     LDX #2
     LDY #0
@@ -291,10 +291,7 @@ load_success
 ; Print a EOL
     LDA #$9B
     JSR PUTC
-    
 
-    
-    
 ; -------------------------
 ; Main program end
 ; -------------------------
@@ -439,7 +436,7 @@ filename dta v(COMTAB+$21)
 block_pointer dta a(0)
 block_size dta a(0)
 
-ticks_per_quarter dta a(0)
+var dta a(0)
 
     blk update address
     blk update symbols
