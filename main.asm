@@ -35,6 +35,7 @@ fhandle equ $0760 ;byte
 faux1 equ $0782 ;word
 faux4 equ $0785 ;word
 syscall equ $0787 ;byte
+memlo equ $02E7 ;word
 
 ; -------------------------
 ; User zero page registers
@@ -45,7 +46,6 @@ byte equ user_zero ;byte
 word equ user_zero ;word
 dword equ user_zero ;double word
 pointer equ user_zero+4 ;word
-
 
 ; -------------------------
 ; Structs
@@ -60,9 +60,8 @@ header_chunk.end equ header_chunk.tracks_delta_time_ticks_per_quarter + 2 ;zero
 
 track_chunk equ header_chunk.end
 track_chunk.id equ track_chunk ;double word
-track_chunk.length equ track_chunk ;double word
-
-
+track_chunk.length equ track_chunk ;double word 
+   
 ; -------------------------
 ; Main program
 ; -------------------------
@@ -260,6 +259,38 @@ load_success
     LDA #$9B
     JSR PUTC
 
+    
+    LDA word
+    STA var
+    LDA word+1
+    STA var+1
+; Print word hex value
+    LDX #2
+    LDY #0
+    LDA #<(var+0x0FFD)
+    STA pointer
+    LDA #>(var+0x0FFD)
+    STA pointer+1
+    JSR HPRINT
+; Print a EOL
+    LDA #$9B
+    JSR PUTC
+
+    LDA #<var
+    STA word
+    LDA #>var
+    STA word+1
+; Print word hex value
+    LDX #2
+    LDY #0
+    LDA #<word
+    STA pointer
+    LDA #>word
+    STA pointer+1
+    JSR HPRINT
+; Print a EOL
+    LDA #$9B
+    JSR PUTC
 
 ; -------------------------
 ; Main program end
@@ -400,13 +431,13 @@ filename dta v(COMTAB+$21)
 
 ; -------------------------
 ; Variables
-; (actual data)
+; (actual data and init)
 ; -------------------------
 block_pointer dta a(0)
 block_size dta a(0)
 
-delta_time_ticks_per_quarter_pow dta a(0)
+var dta a(0)
 
-    blk update addresses
+    blk update address
     blk update symbols
     end
