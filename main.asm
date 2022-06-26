@@ -219,20 +219,20 @@ end_delta_part_read
 
 ; Zeroes all msb on delta parts
     LDA delta
-    AND #7F
+    AND #$7F
     STA delta
     LDA delta+1
-    AND #7F
+    AND #$7F
     STA delta+1
     LDA delta+2
-    AND #7F
+    AND #$7F
     STA delta+2
     LDA delta+3
-    AND #7F
+    AND #$7F
     STA delta+3
 
 ; Sets shift_reg to 0xFF
-    LDA 0xFF
+    LDA $FF
     STA shift_reg
 ; Shift right delta+1 and
 ; stores lsb on shift_reg msb
@@ -245,7 +245,7 @@ end_delta_part_read
     STA delta ; delta+0 is ready!
 
 ; Sets shift_reg to 0xFF
-    LDA 0xFF
+    LDA $FF
     STA shift_reg
 ; Shift right delta+2 twice and
 ; stores lsb on shift_reg msb
@@ -261,7 +261,7 @@ end_delta_part_read
     STA delta+1 ; delta+1 is ready!
 
 ; Sets shift_reg to 0xFF
-    LDA 0xFF
+    LDA $FF
     STA shift_reg
 ; Shift right delta+3 3 times and
 ; stores lsb on shift_reg msb
@@ -442,7 +442,7 @@ block_size dta a(0)
 ticks_per_quarter dta a(0)
 delta_part dta b(0)
 delta dta f(0)
-shift_reg sta b(0)
+shift_reg dta b(0)
 
     blk update address
     blk update symbols
