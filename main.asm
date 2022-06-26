@@ -220,7 +220,7 @@ load_success
 ; -------------------------
 ; Subroutines
 ; -------------------------
-; GETDELTA
+GETDELTA
 ; Calculates delta MIDI encoding
 ; Pointer used:
 ;   pointer (word)
@@ -319,13 +319,13 @@ end_delta_part_read
     STA delta+2 ; delta+2 is ready!
     RTS
 
-; DELAY
+DELAY
 ; This routine uses ATARI
 ; Real Time Clock registers.
 ; A = 1/60 seconds wait
 ; X = 1/60 * 256 seconds wait
 ; Y = 1/60 * 256 * 256 seconds wait
-DELAY PHA
+    PHA
     LDA #0
     STA 18
     STA 19
@@ -339,7 +339,7 @@ DELAY_a CMP 20
     BNE DELAY_a
     RTS
 
-; CPRINT
+CPRINT
 ; This routine prints chars stored 
 ; in memory. 
 ; Uses zero page indirect addressing.
@@ -347,7 +347,6 @@ DELAY_a CMP 20
 ; $81 = Addresa MSB
 ; X = Length
 ; Y = Beginning (can be used with structs)
-CPRINT
     LDA (pointer),Y
     JSR PUTC
     INY
@@ -355,7 +354,7 @@ CPRINT
     BNE CPRINT
     RTS
 
-; HPRINT
+HPRINT
 ; This routine prints hex values stored 
 ; in memory on Big-endian format. 
 ; Uses zero page indirect addressing.
@@ -363,7 +362,6 @@ CPRINT
 ; pointer+1 = Addresa MSB
 ; X = Length
 ; Y = Beginning (can be used with structs)
-HPRINT
     LDA (pointer),Y
     STA HPRINT_value
     JSR PRINTF
@@ -376,22 +374,20 @@ HPRINT
     RTS
 HPRINT_value dta a(0)
 
-;BIG2LTLWORD
+BIG2LTLWORD
 ; This routine transforms big to
 ; little endian word vaules.
 ; word = word value
-BIG2LTLWORD
     LDA word
     LDX word+1
     STX word
     STA word+1
     RTS
 
-;BIG2LTLDWORD
+BIG2LTLDWORD
 ; This routine transforms big to
 ; little endian double word vaules.
 ; dword = double word value
-BIG2LTLDWORD
     LDA dword
     LDX dword+3
     STA dword+3
@@ -402,7 +398,7 @@ BIG2LTLDWORD
     STX dword+1
     RTS
 
-;POWBYTE
+POWBYTE
 ; Binary power of a byte value.
 ; This routine takes value from
 ; acumulator A and returns on X
@@ -413,7 +409,6 @@ BIG2LTLDWORD
 ; Then BPOW returns X=3
 ; IF A == $0A (00001010b)
 ; Then BPOW returns X=3
-POWBYTE
     LDX #0
 POWBYTE_again
     CLC
@@ -424,11 +419,10 @@ POWBYTE_again
 POWBYTE_exit
     RTS
 
-;POWWORD
+POWWORD
 ; Binary power of a word value
 ; stored on word register
 ; Return result on accumulator.
-POWWORD
     LDA word+1
     BEQ POWWORD_lsb
     JSR POWBYTE
