@@ -229,12 +229,52 @@ MAIN_case_FF
     LDA (pointer),Y
     STA midi_meta_command
     INY 
-    STA (pointer),Y
+    LDA (pointer),Y
     STA midi_meta_data_lenth
     INY
 ; Keep track of memory reads
     TYA
     JSR INCMIDIINDEX 
+
+; Print 
+    LDA midi_index
+    STA word
+    LDA midi_index+1
+    STA word+1
+    LDA #<word
+    STA pointer
+    LDA #>word
+    STA pointer+1
+    LDX #2
+    LDY #0
+    JSR HPRINT
+    LDA #$9B
+    JSR PUTC
+; Print 
+    LDA midi_meta_command
+    STA byte
+    LDA #<byte
+    STA pointer
+    LDA #>byte
+    STA pointer+1
+    LDX #1
+    LDY #0
+    JSR HPRINT
+    LDA #$9B
+    JSR PUTC
+; Print 
+    LDA midi_meta_data_lenth
+    STA byte
+    LDA #<byte
+    STA pointer
+    LDA #>byte
+    STA pointer+1
+    LDX #1
+    LDY #0
+    JSR HPRINT
+    LDA #$9B
+    JSR PUTC
+    
 ; pointer=block_pointer+midi_index
     CLC
     LDA block_pointer
@@ -261,6 +301,23 @@ MAIN_0000_again
 ;
 ;}
 MAIN_exit_switch
+
+; Print 
+    LDA midi_meta_data
+    STA word
+    LDA midi_meta_data+1
+    STA word+1
+    LDA #<word
+    STA pointer
+    LDA #>word
+    STA pointer+1
+    LDX #2
+    LDY #0
+    JSR HPRINT
+    LDA #$9B
+    JSR PUTC
+    
+
 
 ; pointer=block_pointer+midi_index
     CLC
@@ -596,8 +653,6 @@ midi_index dta a(0)
 midi_event_command dta b(0)
 midi_meta_command dta b(0)
 midi_meta_data_lenth dta b(0)
-midi_meta_data equ *
-    blk empty 256 main
 ; MIDI file attributes
 ticks_per_quarter dta a(0)
 ; GETDELTA subroutine variables
@@ -605,6 +660,9 @@ delta_part dta b(0)
 delta dta f(0)
 shift_reg dta b(0)
 delta_length dta b(0)
+; MIDI buffer
+midi_meta_data equ *
+    blk empty 256 main
     blk update address
     blk update symbols
     end
