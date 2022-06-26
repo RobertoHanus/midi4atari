@@ -50,7 +50,7 @@ pointer equ user_zero+4 ;word
 ; -------------------------
 ; Structs
 ; -------------------------
-header_chunk equ 0 ;14 bytes 
+header_chunk equ 0 ;14 bytes
 header_chunk.id equ header_chunk ;double word
 header_chunk.length equ header_chunk.id + 4 ;double word
 header_chunk.file_format equ header_chunk.length + 4 ;word 
@@ -58,7 +58,7 @@ header_chunk.tracks_number equ header_chunk.file_format + 2 ;word
 header_chunk.tracks_delta_time_ticks_per_quarter equ header_chunk.tracks_number + 2 ;word
 header_chunk.end equ header_chunk.tracks_delta_time_ticks_per_quarter + 2 ;zero
 
-track_chunk equ header_chunk.end
+track_chunk equ header_chunk.end ;12
 track_chunk.id equ track_chunk ;double word
 track_chunk.length equ track_chunk.id + 4 ;double word 
 track_chunk.data equ track_chunk.length + 4 ;double word 
@@ -181,18 +181,29 @@ load_success
     LDA word+1
     STA ticks_per_quarter+1
 
+; Initiates midi_index to point
+; track_chunk.data (first event)
+; to start keep track of memory reads.
+    LDA #<track_chunk.data
+    STA midi_index
+    LDA #>track_chunk.data
+    STA midi_index+1
+
 ; Point to memory block
 ; track_chunk.data (first delta)
     CLC
     LDA block_pointer
-    ADC #track_chunk.data
+    ADC midi_index
     STA pointer
     LDA block_pointer+1
-    ADC #0
+    ADC midi_index+1
     STA pointer+1
 
 ; Calculate delta pointed
     JSR GETDELTA
+
+    LDA delta_length
+    JSR INCMIDIINDEX
 
 ; Print delta 
     LDA delta
@@ -210,8 +221,23 @@ load_success
     LDX #4
     LDY #0
     JSR HPRINT
-    
-    
+    LDA #$9B
+    JSR PUTC
+
+; Print midi_index
+    LDA midi_index
+    STA word
+    LDA midi_index+1
+    STA word+1
+    LDA #<word
+    STA pointer
+    LDA #>word
+    STA pointer+1
+    LDX #2
+    LDY #0
+    JSR HPRINT
+    LDA #$9B
+    JSR PUTC
 ; -------------------------
 ; Main program end
 ; -------------------------
@@ -220,17 +246,44 @@ load_success
 ; -------------------------
 ; Subroutines
 ; -------------------------
+INCMIDIINDEX
+; Increments midi_index to keep track of next
+; read and end of memory block.
+; Must be incremented by each delta/event
+; read.
+; Input:
+;  A register amount to increase midi_index
+; Output:
+;  midi_index
+    CLC
+    ADC midi_index
+    BCC INCMIDIINDEX_ready
+    STA midi_index
+    LDA midi_index+1
+    ADC #0
+    STA midi_index+1
+    JMP INCMIDIINDEX_exit
+INCMIDIINDEX_ready
+    STA midi_index
+INCMIDIINDEX_exit
+    RTS
+
+
 GETDELTA
 ; Calculates delta MIDI encoding
-; Pointer used:
-;   pointer (word)
-;       Must point to next
-;       delta posmem
-; Vars used:
-;   delta_part (byte)
-;   delta (dword)
-;   shift_reg (byte)
+; Inputs:
+;  poinzter (word)
+;   Must point to next
+;   delta posmem
+; Outputs:
+;  delta (dword)
+;  delta_length (byte)
+; Used:
+;  shift_reg (byte)
+;  delta_part (byte)
 ; Clean delta and regs
+    LDA #1
+    STA delta_length;
     LDA #0
     LDX #0
     LDY #0
@@ -239,19 +292,21 @@ GETDELTA
     STA delta+2
     STA delta+3
 ; Loads A register with data pointed    
-next_delta_part
+GETDELTA_next_delta_part
     LDA (pointer),Y
     STA delta, X
 ; If A msb is 0 ends delta_parts 
 ; read
     CLC
     ROL
-    BCC end_delta_part_read
+    BCC GETDELTA_end_delta_part_read
     INX
     INY
-    JMP next_delta_part   
-end_delta_part_read
-
+    JMP GETDELTA_next_delta_part   
+GETDELTA_end_delta_part_read
+; Important, stores delta length
+    INX
+    STX delta_length
 ; Important next procedure 
 ; Fixes delta double word data
 ; to MIDI coded delta time
@@ -359,7 +414,7 @@ HPRINT
 ; in memory on Big-endian format. 
 ; Uses zero page indirect addressing.
 ; pointer = Address LSB
-; pointer+1 = Addresa MSB
+; pointer+1 = Address MSB
 ; X = Length
 ; Y = Beginning (can be used with structs)
     LDA (pointer),Y
@@ -446,15 +501,35 @@ filename dta v(COMTAB+$21)
 ; Variables
 ; (actual data and init)
 ; -------------------------
-; MAIN variables
+; MAIN procedure variables
+; Memory managment
 block_pointer dta a(0)
 block_size dta a(0)
+; MIDI memory block index
+;  Points relative to 
+;  midi file loaded at
+;  memory block allocated.
+;  (Zero at block_pointer 
+;  beginnig).
+;  At each reading of memory
+;  this index must increse
+;  to keep track of next
+;  posmem. 
+;  Usefull to know if end
+;  of memory block was reached.
+;  A most, to keep track
+;  of next delta/event. 
+;  Compare to block_size to know
+;  if end of block reached.
+midi_index dta a(0)
+; MIDI file attributes
 ticks_per_quarter dta a(0)
 
-; GETDELTA variables
+; GETDELTA subroutine variables
 delta_part dta b(0)
 delta dta f(0)
 shift_reg dta b(0)
+delta_length dta b(0)
 
     blk update address
     blk update symbols
