@@ -196,18 +196,40 @@ load_success
     LDA block_pointer+1
     ADC #0
     STA pointer+1
-; Y = 0
+
+    LDX #0
     LDY #0
 ; Loads A register with data pointed    
+next_delta_part
     LDA (pointer),Y
-    STA byte
-    LDA #<byte
+    STA delta, X
+; If A msb is 0 ends delta_parts 
+; read
+    CLC
+    ROL
+    BCC end_delta_part_read
+    INX
+    INY
+    JMP next_delta_part
+    
+end_delta_part_read
+
+    LDA delta
+    STA dword
+    LDA delta+1
+    STA dword+1
+    LDA delta+2
+    STA dword+2
+    LDA delta+3
+    STA dword+3
+    LDA #<dword
     STA pointer
-    LDA #>byte
+    LDA #>dword
     STA pointer+1
-    LDX #1
+    LDX #4
     LDY #0
-    JSR HPRINT  
+    JSR HPRINT
+    
     
 ; -------------------------
 ; Main program end
