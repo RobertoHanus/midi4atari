@@ -181,14 +181,8 @@ load_success
     LDA word+1
     STA ticks_per_quarter+1
 
-; Clean delta
-    LDA #0
-    STA delta
-    STA delta+1
-    STA delta+2
-    STA delta+3
 ; Point to memory block
-; track_chunk.data section
+; track_chunk.data (first delta)
     CLC
     LDA block_pointer
     ADC #track_chunk.data
@@ -197,8 +191,53 @@ load_success
     ADC #0
     STA pointer+1
 
+; Calculate delta pointed
+    JSR GETDELTA
+
+; Print delta 
+    LDA delta
+    STA dword
+    LDA delta+1
+    STA dword+1
+    LDA delta+2
+    STA dword+2
+    LDA delta+3
+    STA dword+3
+    LDA #<dword
+    STA pointer
+    LDA #>dword
+    STA pointer+1
+    LDX #4
+    LDY #0
+    JSR HPRINT
+    
+    
+; -------------------------
+; Main program end
+; -------------------------
+    RTS
+
+; -------------------------
+; Subroutines
+; -------------------------
+; GETDELTA
+; Calculates delta MIDI encoding
+; Pointer used:
+;   pointer (word)
+;       Must point to next
+;       delta posmem
+; Vars used:
+;   delta_part (byte)
+;   delta (dword)
+;   shift_reg (byte)
+; Clean delta and regs
+    LDA #0
     LDX #0
     LDY #0
+    STA delta
+    STA delta+1
+    STA delta+2
+    STA delta+3
 ; Loads A register with data pointed    
 next_delta_part
     LDA (pointer),Y
@@ -278,32 +317,8 @@ end_delta_part_read
     LDA delta+2
     ORA shift_reg
     STA delta+2 ; delta+2 is ready!
-
-    LDA delta
-    STA dword
-    LDA delta+1
-    STA dword+1
-    LDA delta+2
-    STA dword+2
-    LDA delta+3
-    STA dword+3
-    LDA #<dword
-    STA pointer
-    LDA #>dword
-    STA pointer+1
-    LDX #4
-    LDY #0
-    JSR HPRINT
-    
-    
-; -------------------------
-; Main program end
-; -------------------------
     RTS
 
-; -------------------------
-; Subroutines
-; -------------------------
 ; DELAY
 ; This routine uses ATARI
 ; Real Time Clock registers.
@@ -437,9 +452,12 @@ filename dta v(COMTAB+$21)
 ; Variables
 ; (actual data and init)
 ; -------------------------
+; MAIN variables
 block_pointer dta a(0)
 block_size dta a(0)
 ticks_per_quarter dta a(0)
+
+; GETDELTA variables
 delta_part dta b(0)
 delta dta f(0)
 shift_reg dta b(0)
