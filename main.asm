@@ -189,18 +189,19 @@ load_success
     LDA #>track_chunk.data
     STA midi_index+1
 
+MAIN_next_delta
 ; Checks if midi_index has reached
 ; end of memory block.
 ; if midi_index<block_length continue
 ; else end
     LDA midi_index+1
-    CMP block_length+1
+    CMP block_size+1
     BMI MAIN_0000_contine
     BEQ MAIN_0000_next_comp
     RTS
 MAIN_0000_next_comp
     LDA midi_index
-    CMP block_length
+    CMP block_size
     BMI MAIN_0000_contine
     RTS
 MAIN_0000_contine
@@ -220,6 +221,26 @@ MAIN_0000_contine
     JSR GETDELTA
     LDA delta_length
     JSR INCMIDIINDEX
+
+; Print delta
+    LDA delta
+    STA dword
+    LDA delta+1
+    STA dword+1
+    LDA delta+2
+    STA dword+2
+    LDA delta+3
+    STA dword+3
+    LDA #<dword
+    STA pointer
+    LDA #>dword
+    STA pointer+1
+    LDX #4
+    LDY #0
+    JSR HPRINT
+    LDA #$9B
+    JSR PUTC
+
 
 ; Point to next MIDI event commamnd
 ; pointer=block_pointer+midi_index
@@ -290,9 +311,9 @@ MAIN_exit_switch
     ADC midi_index+1
     STA pointer+1
 
-    JSR GETDELTA
-    LDA delta_length
-    JSR INCMIDIINDEX
+    ;JSR GETDELTA
+    ;LDA delta_length
+    ;JSR INCMIDIINDEX
 
 ; Print midi_index
     LDA midi_index
@@ -308,6 +329,9 @@ MAIN_exit_switch
     JSR HPRINT
     LDA #$9B
     JSR PUTC
+
+; Loop for next delta
+    JMP MAIN_next_delta
 ; -------------------------
 ; Main program end
 ; -------------------------
