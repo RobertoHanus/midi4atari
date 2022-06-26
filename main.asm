@@ -189,6 +189,22 @@ load_success
     LDA #>track_chunk.data
     STA midi_index+1
 
+; Checks if midi_index has reached
+; end of memory block.
+; if midi_index<block_length continue
+; else end
+    LDA midi_index+1
+    CMP block_length+1
+    BMI MAIN_0000_contine
+    BEQ MAIN_0000_next_comp
+    RTS
+MAIN_0000_next_comp
+    LDA midi_index
+    CMP block_length
+    BMI MAIN_0000_contine
+    RTS
+MAIN_0000_contine
+
 ; Point to next delta
 ; pointer=block_pointer+midi_index
     CLC
@@ -222,7 +238,7 @@ load_success
 ; switch(A) {
     CMP #$FF
     BEQ MAIN_case_FF
-    JMP MAIN_exit_switch
+    JMP MAIN_delault_switch
 ;   case $FF: /* event is a meta-event */
 MAIN_case_FF
     INY
@@ -235,46 +251,6 @@ MAIN_case_FF
 ; Keep track of memory reads
     TYA
     JSR INCMIDIINDEX 
-
-; Print 
-    LDA midi_index
-    STA word
-    LDA midi_index+1
-    STA word+1
-    LDA #<word
-    STA pointer
-    LDA #>word
-    STA pointer+1
-    LDX #2
-    LDY #0
-    JSR HPRINT
-    LDA #$9B
-    JSR PUTC
-; Print 
-    LDA midi_meta_command
-    STA byte
-    LDA #<byte
-    STA pointer
-    LDA #>byte
-    STA pointer+1
-    LDX #1
-    LDY #0
-    JSR HPRINT
-    LDA #$9B
-    JSR PUTC
-; Print 
-    LDA midi_meta_data_lenth
-    STA byte
-    LDA #<byte
-    STA pointer
-    LDA #>byte
-    STA pointer+1
-    LDX #1
-    LDY #0
-    JSR HPRINT
-    LDA #$9B
-    JSR PUTC
-    
 ; pointer=block_pointer+midi_index
     CLC
     LDA block_pointer
@@ -298,27 +274,13 @@ MAIN_0000_again
     JSR INCMIDIINDEX
     JMP MAIN_exit_switch
 ;       break;
+;   default:
+MAIN_delault_switch
+    RTS
 ;
 ;}
 MAIN_exit_switch
-
-; Print 
-    LDA midi_meta_data
-    STA word
-    LDA midi_meta_data+1
-    STA word+1
-    LDA #<word
-    STA pointer
-    LDA #>word
-    STA pointer+1
-    LDX #2
-    LDY #0
-    JSR HPRINT
-    LDA #$9B
-    JSR PUTC
     
-
-
 ; pointer=block_pointer+midi_index
     CLC
     LDA block_pointer
@@ -331,25 +293,6 @@ MAIN_exit_switch
     JSR GETDELTA
     LDA delta_length
     JSR INCMIDIINDEX
-
-; Print delta 
-    LDA delta
-    STA dword
-    LDA delta+1
-    STA dword+1
-    LDA delta+2
-    STA dword+2
-    LDA delta+3
-    STA dword+3
-    LDA #<dword
-    STA pointer
-    LDA #>dword
-    STA pointer+1
-    LDX #4
-    LDY #0
-    JSR HPRINT
-    LDA #$9B
-    JSR PUTC
 
 ; Print midi_index
     LDA midi_index
