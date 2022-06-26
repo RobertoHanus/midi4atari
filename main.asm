@@ -182,15 +182,15 @@ load_success
     STA ticks_per_quarter+1
 
 ; Initiates midi_index to point
-; track_chunk.data (first event)
+; track_chunk.data (first event/delta)
 ; to start keep track of memory reads.
     LDA #<track_chunk.data
     STA midi_index
     LDA #>track_chunk.data
     STA midi_index+1
 
-; Point to memory block
-; track_chunk.data (first delta)
+; Point to next delta
+; pointer=block_pointer+midi_index
     CLC
     LDA block_pointer
     ADC midi_index
@@ -199,11 +199,40 @@ load_success
     ADC midi_index+1
     STA pointer+1
 
-; Calculate delta pointed
+; Decode delta pointed
+; and set midi_index to next posmnem
     JSR GETDELTA
-
     LDA delta_length
     JSR INCMIDIINDEX
+
+; Point to next MIDI event commamnd
+; pointer=block_pointer+midi_index
+    CLC
+    LDA block_pointer
+    ADC midi_index
+    STA pointer
+    LDA block_pointer+1
+    ADC midi_index+1
+    STA pointer+1
+
+; Get event command into A
+    LDY #0
+    LDA (pointer),Y
+
+; switch(A) {
+    CMP #$FF
+    BEQ MAIN_case_FF
+    JMP MAIN_exit_switch
+;   case $FF:
+MAIN_case_FF
+    INY
+    LDA (pointer),Y
+    STA midi_meta_command
+    JMP MAIN_exit_switch
+;       break;
+;
+;}
+MAIN_exit_switch
 
 ; Print delta 
     LDA delta
@@ -272,7 +301,7 @@ INCMIDIINDEX_exit
 GETDELTA
 ; Calculates delta MIDI encoding
 ; Inputs:
-;  poinzter (word)
+;  pointer (word)
 ;   Must point to next
 ;   delta posmem
 ; Outputs:
@@ -505,7 +534,8 @@ filename dta v(COMTAB+$21)
 ; Memory managment
 block_pointer dta a(0)
 block_size dta a(0)
-; MIDI memory block index
+; MIDI
+; Memory block index
 ;  Points relative to 
 ;  midi file loaded at
 ;  memory block allocated.
@@ -522,15 +552,18 @@ block_size dta a(0)
 ;  Compare to block_size to know
 ;  if end of block reached.
 midi_index dta a(0)
+midi_event_command dta b(0)
+midi_meta_command dta b(0)
+midi_meta_lenth dta b(0)
+midi_meta_data equ *
+    blk
 ; MIDI file attributes
 ticks_per_quarter dta a(0)
-
 ; GETDELTA subroutine variables
 delta_part dta b(0)
 delta dta f(0)
 shift_reg dta b(0)
 delta_length dta b(0)
-
     blk update address
     blk update symbols
     end
