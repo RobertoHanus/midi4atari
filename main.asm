@@ -67,6 +67,9 @@ track_chunk.data equ track_chunk.length + 4 ;double word
 ; Main program
 ; -------------------------
     blk reloc main
+    ; init
+    CLD ; Clear decimal flag
+
     ; Read cl parameter
     JSR U_GETPAR
     BNE openfile
@@ -131,7 +134,7 @@ save_memory_block LDA faux1
 
 ; Print allocated memory size
     JSR PRINTF
-    dta c'Memory block size %4x'
+    dta c'Memory block size %d'
     dta b($9B,$00)
     dta v(block_size)
 
@@ -158,83 +161,6 @@ save_memory_block LDA faux1
     RTS     
 load_success 
 
-; Print memory content pointed
-    LDX #2
-    LDA block_pointer
-    STA pointer
-    LDA block_pointer+1
-    STA pointer+1
-    LDY #header_chunk.tracks_number
-    JSR HPRINT
-
-; Loads dword register with data pointed
-    LDY #header_chunk.length
-    LDA (pointer),Y
-    STA dword
-    INY
-    LDA (pointer),Y
-    STA dword+1
-    INY
-    LDA (pointer),Y
-    STA dword+2
-    INY
-    LDA (pointer),Y
-    STA dword+3
-    
-; Transforms double word value stored in 
-; dword reg from big to little endian
-    JSR BIG2LTLDWORD
-
-; Print value of memory content pointed
-    LDX #4
-    LDA #<dword
-    STA pointer
-    LDA #>dword
-    STA pointer+1
-    LDY #0
-    JSR HPRINT
-
-; Calculates BPOW of A
-; and stores result on byte
-    LDA #$8F
-    JSR POWBYTE
-    STX byte
-; Print a EOL
-    LDA #$9B
-    JSR PUTC
-; Print byte hex value
-    LDX #1
-    LDY #0
-    LDA #<byte
-    STA pointer
-    LDA #>byte
-    STA pointer+1
-    JSR HPRINT
-
-; Calculate POW of word register
-; value and stores result on 
-; byte register.
-    LDA #$08
-    STA word
-    LDA #$FF
-    STA word+1
-    JSR POWWORD
-    STA byte    
-; Print a EOL
-    LDA #$9B
-    JSR PUTC
-; Print byte hex value
-    LDX #1
-    LDY #0
-    LDA #<byte
-    STA pointer
-    LDA #>byte
-    STA pointer+1
-    JSR HPRINT
-; Print a EOL
-    LDA #$9B
-    JSR PUTC
-
 ; Point to memory block
     LDA block_pointer
     STA pointer
@@ -254,46 +180,34 @@ load_success
     STA ticks_per_quarter
     LDA word+1
     STA ticks_per_quarter+1
-; Print word hex value
-    LDX #2
-    LDY #0
-    LDA #<word
-    STA pointer
-    LDA #>word
-    STA pointer+1
-    JSR HPRINT
-; Print a EOL
-    LDA #$9B
-    JSR PUTC
 
+; Clean delta
+    LDA #0
+    STA delta
+    STA delta+1
+    STA delta+2
+    STA delta+3
 ; Point to memory block
+; track_chunk.data section
+    CLC
     LDA block_pointer
+    ADC #track_chunk.data
     STA pointer
     LDA block_pointer+1
+    ADC #0
     STA pointer+1
-; Loads word register with data pointed
-    LDY #track_chunk
-    LDA (pointer),Y
-    STA word
-    INY
-    LDA (pointer),Y
-    STA word+1
-; Transforms word to little endian
-    JSR BIG2LTLWORD
-; Print word hex value
-    LDX #2
+; Y = 0
     LDY #0
-    LDA #<word
+; Loads A register with data pointed    
+    LDA (pointer),Y
+    STA byte
+    LDA #<byte
     STA pointer
-    LDA #>word
+    LDA #>byte
     STA pointer+1
-    JSR HPRINT
-; Print a EOL
-    LDA #$9B
-    JSR PUTC
-    
-
-    
+    LDX #1
+    LDY #0
+    JSR HPRINT  
     
 ; -------------------------
 ; Main program end
@@ -438,8 +352,9 @@ filename dta v(COMTAB+$21)
 ; -------------------------
 block_pointer dta a(0)
 block_size dta a(0)
-
 ticks_per_quarter dta a(0)
+delta_part dta b(0)
+delta dta f(0)
 
     blk update address
     blk update symbols
