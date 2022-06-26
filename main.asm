@@ -223,16 +223,57 @@ load_success
     CMP #$FF
     BEQ MAIN_case_FF
     JMP MAIN_exit_switch
-;   case $FF:
+;   case $FF: /* event is a meta-event */
 MAIN_case_FF
     INY
     LDA (pointer),Y
     STA midi_meta_command
+    INY 
+    STA (pointer),Y
+    STA midi_meta_data_lenth
+    INY
+; Keep track of memory reads
+    TYA
+    JSR INCMIDIINDEX 
+; pointer=block_pointer+midi_index
+    CLC
+    LDA block_pointer
+    ADC midi_index
+    STA pointer
+    LDA block_pointer+1
+    ADC midi_index+1
+    STA pointer+1
+; Load MIDI meta data
+    LDX #0
+    LDY #0
+MAIN_0000_again
+    LDA (pointer),Y
+    STA midi_meta_data, X
+    INX
+    INY
+    TXA
+    CMP midi_meta_data_lenth
+    BNE MAIN_0000_again
+    TYA
+    JSR INCMIDIINDEX
     JMP MAIN_exit_switch
 ;       break;
 ;
 ;}
 MAIN_exit_switch
+
+; pointer=block_pointer+midi_index
+    CLC
+    LDA block_pointer
+    ADC midi_index
+    STA pointer
+    LDA block_pointer+1
+    ADC midi_index+1
+    STA pointer+1
+
+    JSR GETDELTA
+    LDA delta_length
+    JSR INCMIDIINDEX
 
 ; Print delta 
     LDA delta
@@ -554,9 +595,9 @@ block_size dta a(0)
 midi_index dta a(0)
 midi_event_command dta b(0)
 midi_meta_command dta b(0)
-midi_meta_lenth dta b(0)
+midi_meta_data_lenth dta b(0)
 midi_meta_data equ *
-    blk
+    blk empty 256 main
 ; MIDI file attributes
 ticks_per_quarter dta a(0)
 ; GETDELTA subroutine variables
