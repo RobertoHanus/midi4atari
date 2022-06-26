@@ -210,9 +210,74 @@ next_delta_part
     BCC end_delta_part_read
     INX
     INY
-    JMP next_delta_part
-    
+    JMP next_delta_part   
 end_delta_part_read
+
+; Important next procedure 
+; Fixes delta double word data
+; to MIDI coded delta time
+
+; Zeroes all msb on delta parts
+    LDA delta
+    AND #7F
+    STA delta
+    LDA delta+1
+    AND #7F
+    STA delta+1
+    LDA delta+2
+    AND #7F
+    STA delta+2
+    LDA delta+3
+    AND #7F
+    STA delta+3
+
+; Sets shift_reg to 0xFF
+    LDA 0xFF
+    STA shift_reg
+; Shift right delta+1 and
+; stores lsb on shift_reg msb
+    CLC
+    ROR delta+1
+    ROR shift_reg
+; Bitwise shift_reg with delta
+    LDA delta
+    ORA shift_reg
+    STA delta ; delta+0 is ready!
+
+; Sets shift_reg to 0xFF
+    LDA 0xFF
+    STA shift_reg
+; Shift right delta+2 twice and
+; stores lsb on shift_reg msb
+    CLC
+    ROR delta+2
+    ROR shift_reg
+    CLC
+    ROR delta+2
+    ROR shift_reg
+; Bitwise shift_reg with delta+1
+    LDA delta+1
+    ORA shift_reg
+    STA delta+1 ; delta+1 is ready!
+
+; Sets shift_reg to 0xFF
+    LDA 0xFF
+    STA shift_reg
+; Shift right delta+3 3 times and
+; stores lsb on shift_reg msb
+    CLC
+    ROR delta+3
+    ROR shift_reg
+    CLC
+    ROR delta+3
+    ROR shift_reg
+    CLC
+    ROR delta+3 ; delta+3 is ready;
+    ROR shift_reg
+; Bitwise shift_reg with delta+1
+    LDA delta+2
+    ORA shift_reg
+    STA delta+2 ; delta+2 is ready!
 
     LDA delta
     STA dword
@@ -377,6 +442,7 @@ block_size dta a(0)
 ticks_per_quarter dta a(0)
 delta_part dta b(0)
 delta dta f(0)
+shift_reg sta b(0)
 
     blk update address
     blk update symbols
