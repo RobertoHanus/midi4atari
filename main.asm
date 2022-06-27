@@ -334,11 +334,11 @@ MAIN_0000_again
     TYA
     JSR INCMIDIINDEX
 ; If midi_command != $51 exit switch
-; else set micro_seconds_per_delta_tick
+; else set tempo
     LDA #$51
     CMP midi_command
     BNE MAIN_exit_switch
-    JSR PRINTMETA51
+    JSR SETTEMPO
     JMP MAIN_exit_switch
 ;       break;
 ;   default:
@@ -382,22 +382,59 @@ MAIN_exit_switch
 ; -------------------------
 ; Subroutines
 ; -------------------------
-PRINTMETA51
-; Print meta-event/command $51 info
+SETTEMPO
+; micro_seconds_per_delta_tick=
+;   micro_seconds_per_quarter/ticks_per_quarter
+; On lack of a division operand
+; We can divide micro_seconds_per_quarter
+; by power of two of ticks_per_quarter
+; First we calc POWWORD of ticks_per_quarter
+; Then we shift right micro_seconds_per_quarter
+; pow times.
+; micro_seconds_per_quarter=midi_meta_data
     LDA midi_meta_data
-    STA dword
+    STA micro_seconds_per_quarter
     LDA midi_meta_data+1
-    STA dword+1
+    STA micro_seconds_per_quarter+1
     LDA midi_meta_data+2
+    STA micro_seconds_per_quarter+2
+; Binary power of ticks_per_quarter
+    LDA ticks_per_quarter
+    STA word
+    LDA ticks_per_quarter+1
+    STA word+1
+    JSR POWWORD
+    TAX
+; dword = micro_seconds_per_quarter
+    LDA micro_seconds_per_quarter
+    STA dword
+    LDA micro_seconds_per_quarter+1
+    STA dword+1
+    LDA micro_seconds_per_quarter+2
     STA dword+2
     LDA #0
     STA dword+3
-    LDA #<dword
-    STA pointer
-    LDA #>dword
-    STA pointer+1
-    LDX #4
-    LDY #0
+SETTEMPO_again    
+; Shift right dword
+    CLC
+    ROR dword
+    DEX
+    BNE SETTEMPO_again
+; Print meta-event/command $51 info
+    JSR PRINTF
+    dta c'Meta event: Set tempo'
+    dta b($9B)
+    dta c'ticks per quarter:%2x'
+    dta b($9B)
+    dta c'microseconds per quarter:%3x'
+    dta b($9B)
+    dta c'microseconds per delta tick:%2x'
+    dta b($9B,$00)
+    dta v(ticks_per_quarter)
+    dta v(micro_seconds_per_quarter)
+    dta v(micro_seconds_per_delta_tick)
+    LDA #$9B
+    JSR PUTC
     RTS
 
 PRINTEV
@@ -645,8 +682,9 @@ POWBYTE_exit
     RTS
 
 POWWORD
-; Binary power of a word value
-; stored on word register
+; Binary power (powers of 2) 
+; of a word value stored on word 
+; register.
 ; Return result on accumulator.
     LDA word+1
     BEQ POWWORD_lsb
