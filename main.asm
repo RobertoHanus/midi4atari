@@ -330,8 +330,15 @@ MAIN_0000_again
     TXA
     CMP midi_meta_data_lenth
     BNE MAIN_0000_again
+; Keep track of memory reads
     TYA
     JSR INCMIDIINDEX
+; If midi_command != $51 exit switch
+; else set micro_seconds_per_delta_tick
+    LDA #$51
+    CMP midi_command
+    BNE MAIN_exit_switch
+    JSR PRINTMETA51
     JMP MAIN_exit_switch
 ;       break;
 ;   default:
@@ -375,6 +382,24 @@ MAIN_exit_switch
 ; -------------------------
 ; Subroutines
 ; -------------------------
+PRINTMETA51
+; Print meta-event/command $51 info
+    LDA midi_meta_data
+    STA dword
+    LDA midi_meta_data+1
+    STA dword+1
+    LDA midi_meta_data+2
+    STA dword+2
+    LDA #0
+    STA dword+3
+    LDA #<dword
+    STA pointer
+    LDA #>dword
+    STA pointer+1
+    LDX #4
+    LDY #0
+    RTS
+
 PRINTEV
 ; Print normal event info
     JSR PRINTF
@@ -674,6 +699,9 @@ midi_note_number dta b(0)
 midi_velocity dta b(0)
 ; MIDI file attributes
 ticks_per_quarter dta a(0)
+; MIDI track attributes
+micro_seconds_per_quarter dta f(0)
+micro_seconds_per_delta_tick dta a(0)
 ; GETDELTA subroutine variables
 delta_part dta b(0)
 delta dta f(0)
