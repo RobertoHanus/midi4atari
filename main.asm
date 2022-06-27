@@ -58,6 +58,18 @@ rtc_lsb equ 20
 rtc_mid equ 19
 rtc_msb equ 18
 
+; -------------------------
+; Sound register
+; -------------------------
+AUDF1 equ 53760 ; Audio Frequency Register 1
+AUDC1 equ 53761 ; Audio Control Register 1
+AUDF2 equ 53762 ; Audio Frequency Register 2
+AUDC2 equ 53763 ; Audio Control Register 2
+AUDF3 equ 53764 ; Audio Frequency Register 3
+AUDC3 equ 53765 ; Audio Control Register 3
+AUDF4 equ 53766 ; Audio Frequency Register 4
+AUDC4 equ 53767 ; Audio Control Register 4
+AUDCTL equ 53768 ; Audio Mode Control Register
 
 ; -------------------------
 ; Structs
@@ -81,6 +93,10 @@ track_chunk.data equ track_chunk.length + 4 ;double word
     blk reloc main
     ; init
     CLD ; Clear decimal flag
+    ; Sound initialization
+    ; AUDCTL init
+    LDA #0
+    STA AUDCTL
 
     ; Read cl parameter
     JSR U_GETPAR
@@ -283,6 +299,19 @@ MAIN_0000_contine
 ; Compare delta_milli_seconds with rtc
 ; if lower waits
 RTC_wait
+; -------------------------
+; Wait for next event START
+; -------------------------
+; Here you can place code
+; that want to execute
+; during wait for next 
+; MIDI event
+
+  
+
+; -------------------------
+; Wait for next event END
+; -------------------------
 ; rtc=(milliseconds)RTC
     LDA rtc_lsb
     STA rtc
