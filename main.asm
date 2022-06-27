@@ -222,7 +222,6 @@ MAIN_0000_contine
     LDA delta_length
     JSR INCMIDIINDEX
 
-
 ; Print delta
     LDA delta
     STA dword
@@ -436,6 +435,18 @@ SETTEMPO_again
     STA word+1
     JSR POWWORD
     STA micro_seconds_per_delta_tick_pow
+; Calculate milli seconds per delta tick
+    LDA micro_seconds_per_delta_tick
+    STA milli_seconds_per_delta_tick
+    LDA micro_seconds_per_delta_tick+1
+    STA milli_seconds_per_delta_tick+1
+    LDX micro_seconds_per_delta_tick_pow
+SETTEMPO_0000_again
+    CLC
+    ROR milli_seconds_per_delta_tick+1
+    ROR milli_seconds_per_delta_tick
+    DEX
+    BNE SETTEMPO_0000_again
 ; Print meta-event/command $51 info
     JSR PRINTF
     dta c'Meta event: Set tempo'
@@ -447,13 +458,14 @@ SETTEMPO_again
     dta c'microseconds per delta tick:%d'
     dta b($9B)
     dta c'microseconds per delta tick power:%b'
+    dta b($9B)
+    dta c'milliseconds per delta tick:%d'
     dta b($9B,$00)
     dta v(ticks_per_quarter)
     dta v(micro_seconds_per_quarter)
     dta v(micro_seconds_per_delta_tick)
     dta v(micro_seconds_per_delta_tick_pow)
-    LDA #$9B
-    JSR PUTC
+    dta v(milli_seconds_per_delta_tick)
     RTS
 
 PRINTEV
@@ -662,6 +674,34 @@ MAIN_case_exit
     LDA delta+2
     ORA shift_reg
     STA delta+2 ; delta+2 is ready!
+
+; Calculates delta_milli_seconds
+    LDA delta
+    STA delta_milli_seconds
+    LDA delta+1
+    STA delta_milli_seconds+1
+    LDA delta+2
+    STA delta_milli_seconds+2
+    LDA delta+3
+    STA delta_milli_seconds+3
+; Power of milli_seconds_per_delta_tick
+    LDA milli_seconds_per_delta_tick
+    STA word    
+    LDA milli_seconds_per_delta_tick+1
+    STA word+1
+    JSR POWWORD
+    TAX
+GETDELTA_again
+; if X==0 exit
+    BEQ GETDELTA_exit
+    CLC
+    ROL delta_milli_seconds
+    ROL delta_milli_seconds+1
+    ROL delta_milli_seconds+2
+    ROL delta_milli_seconds+3
+    DEX
+    JMP GETDELTA_again
+GETDELTA_exit
     RTS
 
 DELAY
@@ -825,12 +865,13 @@ micro_seconds_per_quarter dta f(0)
 micro_seconds_per_delta_tick dta a(0)
 micro_seconds_per_delta_tick_pow dta b(0)
 ; MIDI track variables
-milli_seconds_per_delta_tick dta(0)
+milli_seconds_per_delta_tick dta a(0)
 ; GETDELTA subroutine variables
 delta_part dta b(0)
 delta dta f(0)
 shift_reg dta b(0)
 delta_length dta b(0)
+delta_milli_seconds dta f(0)
 ; MIDI buffer
 midi_meta_data equ *
     blk empty 256 main
