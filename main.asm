@@ -436,7 +436,7 @@ SETTEMPO_again
     dta b($9B)
     dta c'microseconds per quarter:%6x'
     dta b($9B)
-    dta c'microseconds per delta tick:%4x'
+    dta c'microseconds per delta tick:%d'
     dta b($9B,$00)
     dta v(ticks_per_quarter)
     dta v(micro_seconds_per_quarter)
@@ -539,6 +539,70 @@ GETDELTA_end_delta_part_read
     LDA delta+3
     AND #$7F
     STA delta+3
+    
+; -------------------------
+; Delta big fix! 
+; -------------------------
+; if delta_length==1
+; delta no change
+
+; if delta_length==2
+; delta=deltla+1
+; delta+1=delta
+
+; if delta_length==3
+; delta=delta+2
+; delta+1=delta+1
+; delta+2=delta
+
+; if delta_length==4
+; delta=delta+3
+; delta+1=delta+2
+; delta+2=delta+1
+; delta+3=delta
+
+; dword=delta
+    LDA delta
+    STA dword
+    LDA delta+1
+    STA dword+1
+    LDA delta+2
+    STA dword+2
+    LDA delta+3
+    STA dword+3
+
+    LDA delta_length
+    CMP #1
+    BEQ MAIN_case_one
+    LDA delta_length
+    CMP #2
+    BEQ MAIN_case_two
+    LDA delta_length
+    CMP #3
+    BEQ MAIN_case_three
+MAIN_case_four
+    LDA word+3
+    STA delta
+    LDA word+2
+    STA delta+1
+    LDA word+1
+    STA delta+2
+    LDA word
+    STA delta+3
+MAIN_case_three
+    LDA word+2
+    STA delta
+    LDA word
+    STA delta+2
+    JMP MAIN_case_exit
+MAIN_case_two
+    LDA word+1
+    STA delta
+    LDA word
+    STA delta+1
+    JMP MAIN_case_exit
+MAIN_case_one
+MAIN_case_exit
 
 ; Sets shift_reg to 0xFF
     LDA $FF
