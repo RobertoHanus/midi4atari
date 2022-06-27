@@ -306,9 +306,6 @@ RTC_wait
 ; that want to execute
 ; during wait for next 
 ; MIDI event
-
-  
-
 ; -------------------------
 ; Wait for next event END
 ; -------------------------
@@ -378,6 +375,7 @@ MAIN_case_8x
     LDA (pointer),Y
     STA midi_velocity
     INY
+    JSR NOTEOFF
 ; Keep track of memory reads
     TYA
     JSR INCMIDIINDEX 
@@ -394,6 +392,7 @@ MAIN_case_9x
     LDA (pointer),Y
     STA midi_velocity
     INY
+    JSR NOTEON
 ; Keep track of memory reads
     TYA
     JSR INCMIDIINDEX 
@@ -484,6 +483,22 @@ MAIN_exit_switch
 ; -------------------------
 ; Subroutines
 ; -------------------------
+NOTEOFF
+; Turn off MIDI note
+; on midi_note table
+   STA AUDF1    
+   LDA #$E0
+   STA AUDC1
+
+NOTEON
+; Turn on MIDI note
+; on midi_note
+    LDX midi_note_number
+    LDA midi_note,X
+    STA AUDF1    
+    LDA #$EF
+    STA AUDC1
+
 SETTEMPO
 ; micro_seconds_per_delta_tick=
 ;   micro_seconds_per_quarter/ticks_per_quarter
@@ -956,6 +971,32 @@ delta_length dta b(0)
 delta_milli_seconds dta f(0)
 ; Real Time Clock (RTC)
 rtc dta f(0)
+; MIDI calculated frequency value
+; Already calculated, for fast performance
+midi_note equ *
+    ; Octave 1
+    dta b(243,243,243,243,243,243,243,243,243,243,243,243)
+    ; Octave 2
+    dta b(243,243,243,243,243,243,243,243,243,243,243,243)
+    ; Octave 3
+    dta b(243,230,217,204,193,182,172,162,153,144,136,128)
+    ; Octave 4
+    dta b(121,114,108,102, 96, 91, 85, 81, 76, 72, 68, 64)
+    ; Octave 5
+    dta b( 60, 57, 53, 50, 47, 45, 42, 40, 37, 35, 33, 31)
+    ; Octave 6
+    dta b( 30, 28, 26, 25, 23, 22, 21, 19, 18, 17, 16, 15)
+    ; Octave 7
+    dta b( 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15)
+    ; Octave 8
+    dta b( 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15)
+    ; Octave 9
+    dta b( 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15)
+    ; Octave 10
+    dta b( 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15)
+    ; Octave 11
+    dta b( 15, 15, 15, 15, 15, 15, 15)
+
 ; MIDI buffer
 midi_meta_data equ *
     blk empty 256 main
