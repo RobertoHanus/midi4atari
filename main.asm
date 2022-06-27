@@ -126,7 +126,7 @@ openfile JSR PRINTF
     JSR FILELENG
 ; Print file length to console
     JSR PRINTF
-    dta c'File length: %b'
+    dta c'File length: %d'
     dta b($9B,$00)
     dta v(faux1)
 
@@ -217,7 +217,6 @@ load_success
     LDA #>track_chunk.data
     STA midi_index+1
 
-
 ; START RTC
     LDA #0
     STA rtc_msb
@@ -241,6 +240,12 @@ MAIN_0000_next_comp
     BMI MAIN_0000_contine
     RTS
 MAIN_0000_contine
+
+;   JSR PRINTF
+;    dta c'%4x'
+;    dta($9B,$00)
+;    dta v(midi_index)
+
 
 ; Point to next delta
 ; pointer=block_pointer+midi_index
@@ -351,7 +356,7 @@ MAIN_case_8x
     TYA
     JSR INCMIDIINDEX 
 ; Print event info
-    ; JSR PRINTEV
+    ;JSR PRINTEV
     JMP MAIN_exit_switch
 ;       break;
 MAIN_case_9x
@@ -368,7 +373,7 @@ MAIN_case_9x
     TYA
     JSR INCMIDIINDEX 
 ; Print event info
-    ; JSR PRINTEV
+    ;JSR PRINTEV
     JMP MAIN_exit_switch
 ;       break;
 ;   case $FF: /* event is a meta-event/meta-command */
@@ -450,21 +455,6 @@ MAIN_exit_switch
     LDA block_pointer+1
     ADC midi_index+1
     STA pointer+1
-
-; Print midi_index
-    LDA midi_index
-    STA word
-    LDA midi_index+1
-    STA word+1
-    LDA #<word
-    STA pointer
-    LDA #>word
-    STA pointer+1
-    LDX #2
-    LDY #0
-    JSR HPRINT
-    LDA #$9B
-    JSR PUTC
 
 ; Loop for next delta
     JMP MAIN_next_delta
