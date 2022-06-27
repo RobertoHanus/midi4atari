@@ -309,6 +309,11 @@ RTC_again
     CMP delta_milli_seconds        
     BMI RTC_wait
 
+    JSR PRINTF
+    dta c'delta_milli_seconds:%8x'
+    dta b($9B,$00)
+    dta v(delta_milli_seconds)
+
 ; Point to next MIDI event commamnd
 ; pointer=block_pointer+midi_index
     CLC
