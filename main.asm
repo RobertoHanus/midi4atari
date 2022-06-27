@@ -276,19 +276,11 @@ MAIN_case_8x
     LDA (pointer),Y
     STA midi_velocity
     INY
-; Print event info
-    JSR PRINTF
-    dta c'Note off'
-    dta b($9B)
-    dta c'Note number:%d'
-    dta b($9B)
-    dta c'Note velocity:%d'
-    dta b($9B,$00)
-    dta v(midi_note_number)
-    dta v(midi_velocity)
 ; Keep track of memory reads
     TYA
     JSR INCMIDIINDEX 
+; Print event info
+    JSR PRINTEV
     JMP MAIN_exit_switch
 ;       break;
 MAIN_case_9x
@@ -300,19 +292,11 @@ MAIN_case_9x
     LDA (pointer),Y
     STA midi_velocity
     INY
-; Print event info
-    JSR PRINTF
-    dta c'Note on'
-    dta b($9B)
-    dta c'Note number:%d'
-    dta b($9B)
-    dta c'Note velocity:%d'
-    dta b($9B,$00)
-    dta v(midi_note_number)
-    dta v(midi_velocity)
 ; Keep track of memory reads
     TYA
     JSR INCMIDIINDEX 
+; Print event info
+    JSR PRINTEV
     JMP MAIN_exit_switch
 ;       break;
 ;   case $FF: /* event is a meta-event/meta-command */
@@ -391,6 +375,22 @@ MAIN_exit_switch
 ; -------------------------
 ; Subroutines
 ; -------------------------
+PRINTEV
+; Print normal event info
+    JSR PRINTF
+    dta c'Event/command:%2x'
+    dta b($9B,$00)
+    dta v(midi_command)
+    JSR PRINTF
+    dta c'Note number:%b'
+    dta b($9B,$00)
+    dta v(midi_note_number)
+    JSR PRINTF
+    dta c'Note velocity:%b'
+    dta b($9B,$00)    
+    dta v(midi_velocity)
+    RTS
+
 INCMIDIINDEX
 ; Increments midi_index to keep track of next
 ; read and end of memory block.
