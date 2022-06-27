@@ -222,6 +222,7 @@ MAIN_0000_contine
     LDA delta_length
     JSR INCMIDIINDEX
 
+
 ; Print delta
     LDA delta
     STA dword
@@ -428,6 +429,13 @@ SETTEMPO_again
     STA micro_seconds_per_delta_tick
     LDA dword+1
     STA micro_seconds_per_delta_tick+1
+; Pow of micro_seconds_per_delta_tick
+    LDA micro_seconds_per_delta_tick
+    STA word
+    LDA micro_seconds_per_delta_tick+1
+    STA word+1
+    JSR POWWORD
+    STA micro_seconds_per_delta_tick_pow
 ; Print meta-event/command $51 info
     JSR PRINTF
     dta c'Meta event: Set tempo'
@@ -437,10 +445,13 @@ SETTEMPO_again
     dta c'microseconds per quarter:%6x'
     dta b($9B)
     dta c'microseconds per delta tick:%d'
+    dta b($9B)
+    dta c'microseconds per delta tick power:%b'
     dta b($9B,$00)
     dta v(ticks_per_quarter)
     dta v(micro_seconds_per_quarter)
     dta v(micro_seconds_per_delta_tick)
+    dta v(micro_seconds_per_delta_tick_pow)
     LDA #$9B
     JSR PUTC
     RTS
@@ -539,7 +550,7 @@ GETDELTA_end_delta_part_read
     LDA delta+3
     AND #$7F
     STA delta+3
-    
+
 ; -------------------------
 ; Delta big fix! 
 ; -------------------------
@@ -812,6 +823,9 @@ ticks_per_quarter dta a(0)
 ; MIDI track attributes
 micro_seconds_per_quarter dta f(0)
 micro_seconds_per_delta_tick dta a(0)
+micro_seconds_per_delta_tick_pow dta b(0)
+; MIDI track variables
+milli_seconds_per_delta_tick dta(0)
 ; GETDELTA subroutine variables
 delta_part dta b(0)
 delta dta f(0)
