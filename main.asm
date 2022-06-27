@@ -255,16 +255,71 @@ MAIN_0000_contine
 ; Get event command into A
     LDY #0
     LDA (pointer),Y
-
+; Save command to midi_command
+; if midi_command!=$FF is a normal event/command
+    STA midi_command
 ; switch(A) {
     CMP #$FF
     BEQ MAIN_case_FF
+    AND #$F0
+    CMP #$80
+    BEQ MAIN_case_8x
+    CMP #$90
+    BEQ MAIN_case_9x
     JMP MAIN_delault_switch
-;   case $FF: /* event is a meta-event */
+MAIN_case_8x
+;   case $8x: /* Note off */
+    INY
+    LDA (pointer),Y
+    STA midi_note_number
+    INY 
+    LDA (pointer),Y
+    STA midi_velocity
+    INY
+; Print event info
+    JSR PRINTF
+    dta c'Note off'
+    dta b($9B)
+    dta c'Note number:%d'
+    dta b($9B)
+    dta c'Note velocity:%d'
+    dta b($9B,$00)
+    dta v(midi_note_number)
+    dta v(midi_velocity)
+; Keep track of memory reads
+    TYA
+    JSR INCMIDIINDEX 
+    JMP MAIN_exit_switch
+;       break;
+MAIN_case_9x
+;   case $9x: /* Note on */
+    INY
+    LDA (pointer),Y
+    STA midi_note_number
+    INY 
+    LDA (pointer),Y
+    STA midi_velocity
+    INY
+; Print event info
+    JSR PRINTF
+    dta c'Note on'
+    dta b($9B)
+    dta c'Note number:%d'
+    dta b($9B)
+    dta c'Note velocity:%d'
+    dta b($9B,$00)
+    dta v(midi_note_number)
+    dta v(midi_velocity)
+; Keep track of memory reads
+    TYA
+    JSR INCMIDIINDEX 
+    JMP MAIN_exit_switch
+;       break;
+;   case $FF: /* event is a meta-event/meta-command */
 MAIN_case_FF
     INY
     LDA (pointer),Y
-    STA midi_meta_command
+    STA midi_command
     INY 
     LDA (pointer),Y
     STA midi_meta_data_lenth
@@ -310,10 +365,6 @@ MAIN_exit_switch
     LDA block_pointer+1
     ADC midi_index+1
     STA pointer+1
-
-    ;JSR GETDELTA
-    ;LDA delta_length
-    ;JSR INCMIDIINDEX
 
 ; Print midi_index
     LDA midi_index
@@ -617,9 +668,10 @@ block_size dta a(0)
 ;  Compare to block_size to know
 ;  if end of block reached.
 midi_index dta a(0)
-midi_event_command dta b(0)
-midi_meta_command dta b(0)
+midi_command dta b(0)
 midi_meta_data_lenth dta b(0)
+midi_note_number dta b(0)
+midi_velocity dta b(0)
 ; MIDI file attributes
 ticks_per_quarter dta a(0)
 ; GETDELTA subroutine variables
