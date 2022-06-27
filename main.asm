@@ -48,6 +48,18 @@ dword equ user_zero ;double word
 pointer equ user_zero+4 ;word
 
 ; -------------------------
+; Real Time Clock (RTC)
+; -------------------------
+; Real Time Clock registers.
+; 1/60 seconds = $20
+; 1/60 * 256 seconds = $19
+; 1/60 * 256 * 256 seconds = $18
+rtc_lsb equ 20
+rtc_mid equ 19
+rtc_msb equ 18
+
+
+; -------------------------
 ; Structs
 ; -------------------------
 header_chunk equ 0 ;14 bytes
@@ -189,6 +201,14 @@ load_success
     LDA #>track_chunk.data
     STA midi_index+1
 
+
+; START RTC
+    LDA #0
+    STA rtc_msb
+    STA rtc_mid
+    STA rtc_lsb
+; Important next procedure
+; MAIN playback execution loop
 MAIN_next_delta
 ; Checks if midi_index has reached
 ; end of memory block.
@@ -241,6 +261,60 @@ MAIN_0000_contine
     LDA #$9B
     JSR PUTC
 
+; Print delta on milliseconds
+    LDA delta_milli_seconds
+    STA dword
+    LDA delta_milli_seconds+1
+    STA dword+1
+    LDA delta_milli_seconds+2
+    STA dword+2
+    LDA delta_milli_seconds+3
+    STA dword+3
+    LDA #<dword
+    STA pointer
+    LDA #>dword
+    STA pointer+1
+    LDX #4
+    LDY #0
+    JSR HPRINT
+    LDA #$9B
+    JSR PUTC
+
+; RTC to milliseconds
+; rtc=(milliseconds)RTC
+    LDA rtc_lsb
+    STA rtc
+    LDA rtc_mid
+    STA rtc+1
+    LDA rtc_msb
+    STA rtc+2
+    LDA #0
+    STA rtc+3
+    LDX #4
+RTC_again
+    CLC
+    ROL rtc
+    ROL rtc+1
+    ROL rtc+2
+    ROL rtc+3
+    DEX
+    BNE RTC_again
+
+; Compare delta_milli_seconds with rtc
+; if lower waits
+RTC_wait
+    LDA delta_milli_seconds+3
+    CMP rtc+3
+    BMI RTC_wait
+    LDA delta_milli_seconds+2
+    CMP rtc+2
+    BMI RTC_wait
+    LDA delta_milli_seconds+1
+    CMP rtc+1
+    BMI RTC_wait
+    LDA delta_milli_seconds
+    CMP rtc
+    BMI RTC_wait
 
 ; Point to next MIDI event commamnd
 ; pointer=block_pointer+midi_index
@@ -704,26 +778,6 @@ GETDELTA_again
 GETDELTA_exit
     RTS
 
-DELAY
-; This routine uses ATARI
-; Real Time Clock registers.
-; A = 1/60 seconds wait
-; X = 1/60 * 256 seconds wait
-; Y = 1/60 * 256 * 256 seconds wait
-    PHA
-    LDA #0
-    STA 18
-    STA 19
-    STA 20
-    PLA
-DELAY_y CPY 18
-    BNE DELAY_y
-DELAY_x  CPX 19
-    BNE DELAY_x
-DELAY_a CMP 20
-    BNE DELAY_a
-    RTS
-
 CPRINT
 ; This routine prints chars stored 
 ; in memory. 
@@ -872,6 +926,8 @@ delta dta f(0)
 shift_reg dta b(0)
 delta_length dta b(0)
 delta_milli_seconds dta f(0)
+; Real Time Clock (RTC)
+rtc dta f(0)
 ; MIDI buffer
 midi_meta_data equ *
     blk empty 256 main
