@@ -391,7 +391,7 @@ SETTEMPO
 ; First we calc POWWORD of ticks_per_quarter
 ; Then we shift right micro_seconds_per_quarter
 ; pow times.
-; micro_seconds_per_quarter=midi_meta_data
+; (3bytes)micro_seconds_per_quarter=midi_meta_data
     LDA midi_meta_data
     STA micro_seconds_per_quarter
     LDA midi_meta_data+1
@@ -405,30 +405,36 @@ SETTEMPO
     STA word+1
     JSR POWWORD
     TAX
-; dword = micro_seconds_per_quarter
+; (3bytes)dword = micro_seconds_per_quarter
     LDA micro_seconds_per_quarter
     STA dword
     LDA micro_seconds_per_quarter+1
     STA dword+1
     LDA micro_seconds_per_quarter+2
     STA dword+2
-    LDA #0
-    STA dword+3
 SETTEMPO_again    
-; Shift right dword
+; Shift right (3bytes)dword
     CLC
+    ROR dword+2
+    ROR dword+1
     ROR dword
     DEX
     BNE SETTEMPO_again
+; micro_seconds_per_delta_tick=(word)dword
+; word casting
+    LDA micro_seconds_per_delta_tick
+    STA dword
+    LDA micro_seconds_per_delta_tick+1
+    STA dword+1
 ; Print meta-event/command $51 info
     JSR PRINTF
     dta c'Meta event: Set tempo'
     dta b($9B)
     dta c'ticks per quarter:%2x'
     dta b($9B)
-    dta c'microseconds per quarter:%3x'
+    dta c'microseconds per quarter:%6x'
     dta b($9B)
-    dta c'microseconds per delta tick:%2x'
+    dta c'microseconds per delta tick:%4x'
     dta b($9B,$00)
     dta v(ticks_per_quarter)
     dta v(micro_seconds_per_quarter)
