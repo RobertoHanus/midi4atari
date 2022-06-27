@@ -280,7 +280,9 @@ MAIN_0000_contine
     LDA #$9B
     JSR PUTC
 
-; RTC to milliseconds
+; Compare delta_milli_seconds with rtc
+; if lower waits
+RTC_wait
 ; rtc=(milliseconds)RTC
     LDA rtc_lsb
     STA rtc
@@ -300,20 +302,17 @@ RTC_again
     DEX
     BNE RTC_again
 
-; Compare delta_milli_seconds with rtc
-; if lower waits
-RTC_wait
-    LDA delta_milli_seconds+3
-    CMP rtc+3
+    LDA rtc+3
+    CMP delta_milli_seconds+3
     BMI RTC_wait
-    LDA delta_milli_seconds+2
-    CMP rtc+2
+    LDA rtc+2
+    CMP delta_milli_seconds+2
     BMI RTC_wait
-    LDA delta_milli_seconds+1
-    CMP rtc+1
+    LDA rtc+1
+    CMP delta_milli_seconds+1
     BMI RTC_wait
-    LDA delta_milli_seconds
-    CMP rtc
+    LDA rtc
+    CMP delta_milli_seconds        
     BMI RTC_wait
 
 ; Point to next MIDI event commamnd
