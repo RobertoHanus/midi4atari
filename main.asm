@@ -258,43 +258,6 @@ MAIN_0000_contine
     LDA delta_length
     JSR INCMIDIINDEX
 
-; Print delta
-    LDA delta
-    STA dword
-    LDA delta+1
-    STA dword+1
-    LDA delta+2
-    STA dword+2
-    LDA delta+3
-    STA dword+3
-    LDA #<dword
-    STA pointer
-    LDA #>dword
-    STA pointer+1
-    LDX #4
-    LDY #0
-    JSR HPRINT
-    LDA #$9B
-    JSR PUTC
-
-; Print delta on milliseconds
-    LDA delta_milli_seconds
-    STA dword
-    LDA delta_milli_seconds+1
-    STA dword+1
-    LDA delta_milli_seconds+2
-    STA dword+2
-    LDA delta_milli_seconds+3
-    STA dword+3
-    LDA #<dword
-    STA pointer
-    LDA #>dword
-    STA pointer+1
-    LDX #4
-    LDY #0
-    JSR HPRINT
-    LDA #$9B
-    JSR PUTC
 
 ; Compare delta_milli_seconds with rtc
 ; if lower waits
@@ -365,6 +328,14 @@ RTC_again
     BEQ MAIN_case_8x
     CMP #$90
     BEQ MAIN_case_9x
+    CMP #$A0
+    BEQ MAIN_case_Ax
+    CMP #$B0
+    BEQ MAIN_case_Bx
+    CMP #$C0
+    BEQ MAIN_case_Cx
+    CMP #$D0
+    BEQ MAIN_case_Dx
     JMP MAIN_delault_switch
 MAIN_case_8x
 ;   case $8x: /* Note off */
@@ -380,7 +351,7 @@ MAIN_case_8x
     TYA
     JSR INCMIDIINDEX 
 ; Print event info
-    JSR PRINTEV
+    ; JSR PRINTEV
     JMP MAIN_exit_switch
 ;       break;
 MAIN_case_9x
@@ -397,10 +368,32 @@ MAIN_case_9x
     TYA
     JSR INCMIDIINDEX 
 ; Print event info
-    JSR PRINTEV
+    ; JSR PRINTEV
     JMP MAIN_exit_switch
 ;       break;
 ;   case $FF: /* event is a meta-event/meta-command */
+MAIN_case_Ax
+    INY
+    INY
+    INY
+    JSR INCMIDIINDEX 
+MAIN_case_Bx
+    INY
+    INY
+    INY
+    JSR INCMIDIINDEX 
+MAIN_case_Cx
+    INY
+    INY
+    JSR INCMIDIINDEX 
+MAIN_case_Dx
+    INY
+    INY
+    JSR INCMIDIINDEX
+MAIN_case_Ex
+    INY
+    INY
+    JSR INCMIDIINDEX 
 MAIN_case_FF
     INY
     LDA (pointer),Y
@@ -486,9 +479,9 @@ MAIN_exit_switch
 NOTEOFF
 ; Turn off MIDI note
 ; on midi_note table
-   STA AUDF1    
-   LDA #$E0
+   LDA #$00
    STA AUDC1
+   RTS
 
 NOTEON
 ; Turn on MIDI note
@@ -498,6 +491,7 @@ NOTEON
     STA AUDF1    
     LDA #$EF
     STA AUDC1
+    RTS
 
 SETTEMPO
 ; micro_seconds_per_delta_tick=
