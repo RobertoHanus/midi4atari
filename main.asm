@@ -391,13 +391,15 @@ SETTEMPO
 ; First we calc POWWORD of ticks_per_quarter
 ; Then we shift right micro_seconds_per_quarter
 ; pow times.
-; (3bytes)micro_seconds_per_quarter=midi_meta_data
+; micro_seconds_per_quarter=(3bytes to little endian)midi_meta_data
+    LDA #0
+    STA micro_seconds_per_quarter+3
     LDA midi_meta_data
-    STA micro_seconds_per_quarter
+    STA micro_seconds_per_quarter+2
     LDA midi_meta_data+1
     STA micro_seconds_per_quarter+1
     LDA midi_meta_data+2
-    STA micro_seconds_per_quarter+2
+    STA micro_seconds_per_quarter
 ; Binary power of ticks_per_quarter
     LDA ticks_per_quarter
     STA word
@@ -422,10 +424,10 @@ SETTEMPO_again
     BNE SETTEMPO_again
 ; micro_seconds_per_delta_tick=(word)dword
 ; word casting
-    LDA micro_seconds_per_delta_tick
-    STA dword
-    LDA micro_seconds_per_delta_tick+1
-    STA dword+1
+    LDA dword
+    STA micro_seconds_per_delta_tick
+    LDA dword+1
+    STA micro_seconds_per_delta_tick+1
 ; Print meta-event/command $51 info
     JSR PRINTF
     dta c'Meta event: Set tempo'
