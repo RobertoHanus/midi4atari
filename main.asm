@@ -217,11 +217,6 @@ load_success
     LDA #>track_chunk.data
     STA midi_index+1
 
-; START RTC
-    LDA #0
-    STA rtc_msb
-    STA rtc_mid
-    STA rtc_lsb
 ; Important next procedure
 ; MAIN playback execution loop
 MAIN_next_delta
@@ -262,7 +257,6 @@ MAIN_0000_contine
     JSR GETDELTA
     LDA delta_length
     JSR INCMIDIINDEX
-
 
 ; Compare delta_milli_seconds with rtc
 ; if lower waits
@@ -308,9 +302,14 @@ RTC_again
     LDA rtc
     CMP delta_milli_seconds        
     BMI RTC_wait
+    
+    JSR PRINTF
+    dta c'RTC:%e'
+    dta b($9B,$00)
+    dta v(rtc)
 
     JSR PRINTF
-    dta c'delta_milli_seconds:%8x'
+    dta c'delta:%l'
     dta b($9B,$00)
     dta v(delta_milli_seconds)
 
@@ -330,6 +329,9 @@ RTC_again
 ; Save command to midi_command
 ; if midi_command!=$FF is a normal event/command
     STA midi_command
+; MIDI command read
+; Reset RTC to compare then with delta
+    JSR RESETRTC
 ; switch(A) {
     CMP #$FF
     BEQ MAIN_case_FF
@@ -471,6 +473,13 @@ MAIN_exit_switch
 ; -------------------------
 ; Subroutines
 ; -------------------------
+RESETRTC
+    LDA #0
+    STA rtc_msb
+    STA rtc_mid
+    STA rtc_lsb
+    RTS
+
 NOTEOFF
 ; Turn off MIDI note
 ; on midi_note table
