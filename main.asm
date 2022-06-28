@@ -70,6 +70,10 @@ AUDC3 equ 53765 ; Audio Control Register 3
 AUDF4 equ 53766 ; Audio Frequency Register 4
 AUDC4 equ 53767 ; Audio Control Register 4
 AUDCTL equ 53768 ; Audio Mode Control Register
+SKCTL equ 53775 ;  Serial port control 
+; POKE SKCTL with three to stop the
+; occasional noise from cassette after I/O to bring POKEY out of the
+; two-tone mode
 
 ; -------------------------
 ; Structs
@@ -498,11 +502,6 @@ NOTEOFF
 ; Turn off MIDI note
 ; if midi_note is found playing
 ; in any voice channel then turn off   
-; Sound initialization
-    ; AUDCTL init
-    LDA #$01
-    STA AUDCTL
-; Play note
     LDA voice_1
     CMP midi_note_number
     BNE NOTEOFF_check_voice2
@@ -537,6 +536,10 @@ NOTEOFF_check_voice4
     STA voice_4
     LDA #$E0
     STA AUDC4
+    JMP NOTEOFF_exit
+; Out NOTE ON
+    LDA #'A'
+    JSR PUTC
 NOTEOFF_exit
     RTS
 
@@ -545,13 +548,20 @@ NOTEON
 ; on midi_note fequency table
 ; if voice_x available turn on
 ; else check next voice
+; Sound initialization
+    ; AUDCTL init
+    LDA #$00
+    STA AUDCTL
+    LDA #03
+    STA SKCTL
+; Play note
     LDA voice_1
     CMP #$FF
     BNE NOTEON_check_voice2
     LDX midi_note_number
     STX voice_1
     LDA midi_note,X
-    STA AUDF1    
+    STA AUDF1
     LDA #$EF
     STA AUDC1
     JMP NOTEON_exit
@@ -587,6 +597,10 @@ NOTEON_check_voice4
     STA AUDF4 
     LDA #$EF
     STA AUDC4
+    JMP NOTEON_exit
+; Out NOTE ON
+    LDA #'A'
+    JSR PUTC
 NOTEON_exit
     RTS
 
