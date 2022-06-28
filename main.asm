@@ -1040,6 +1040,8 @@ voice_4 dta b($FF)
 ; MIDI calculated frequency value
 ; Already calculated, for fast performance
 midi_note equ *
+    dta b(243,243,243,243,243,243,243,243,243,243,243,243)
+    dta b(243,243,243,243,243,243,243,243,243,243,243,243)
     ; Octave 1
     dta b(243,243,243,243,243,243,243,243,243,243,243,243)
     ; Octave 2
