@@ -481,12 +481,12 @@ RESETRTC
 NOTEOFF
 ; Turn off MIDI note
 ; if midi_note is found playing
-; in any voice channel then turn off
+; in any voice channel then turn off   
     LDA voice_1
     CMP midi_note_number
     BNE NOTEOFF_check_voice2
     LDA #$FF
-    STX voice_1
+    STA voice_1
     LDA #$E0
     STA AUDC1
     JMP NOTEOFF_exit
@@ -495,7 +495,7 @@ NOTEOFF_check_voice2
     CMP midi_note_number
     BNE NOTEOFF_check_voice3
     LDA #$FF
-    STX voice_2
+    STA voice_2
     LDA #$E0
     STA AUDC2
     JMP NOTEOFF_exit
@@ -504,7 +504,7 @@ NOTEOFF_check_voice3
     CMP midi_note_number
     BNE NOTEOFF_check_voice4
     LDA #$FF
-    STX voice_3
+    STA voice_3
     LDA #$E0
     STA AUDC3
     JMP NOTEOFF_exit
@@ -513,7 +513,7 @@ NOTEOFF_check_voice4
     CMP midi_note_number
     BNE NOTEOFF_exit
     LDA #$FF
-    STX voice_4
+    STA voice_4
     LDA #$E0
     STA AUDC4
 NOTEOFF_exit
@@ -615,19 +615,12 @@ SETTEMPO_again
     STA micro_seconds_per_delta_tick
     LDA dword+1
     STA micro_seconds_per_delta_tick+1
-; Pow of micro_seconds_per_delta_tick
-    LDA micro_seconds_per_delta_tick
-    STA word
-    LDA micro_seconds_per_delta_tick+1
-    STA word+1
-    JSR POWWORD
-    STA micro_seconds_per_delta_tick_pow
 ; Calculate milli seconds per delta tick
     LDA micro_seconds_per_delta_tick
     STA milli_seconds_per_delta_tick
     LDA micro_seconds_per_delta_tick+1
     STA milli_seconds_per_delta_tick+1
-    LDX micro_seconds_per_delta_tick_pow
+    LDX #10
 SETTEMPO_0000_again
     CLC
     ROR milli_seconds_per_delta_tick+1
@@ -638,20 +631,17 @@ SETTEMPO_0000_again
     JSR PRINTF
     dta c'Meta event: Set tempo'
     dta b($9B)
-    dta c'ticks per quarter:%2x'
+    dta c'ticks per quarter:%b'
     dta b($9B)
-    dta c'microseconds per quarter:%6x'
+    dta c'microseconds per quarter:%e'
     dta b($9B)
     dta c'microseconds per delta tick:%d'
-    dta b($9B)
-    dta c'microseconds per delta tick power:%b'
     dta b($9B)
     dta c'milliseconds per delta tick:%d'
     dta b($9B,$00)
     dta v(ticks_per_quarter)
     dta v(micro_seconds_per_quarter)
     dta v(micro_seconds_per_delta_tick)
-    dta v(micro_seconds_per_delta_tick_pow)
     dta v(milli_seconds_per_delta_tick)
     RTS
 
@@ -1030,7 +1020,6 @@ ticks_per_quarter dta a(0)
 ; MIDI track attributes
 micro_seconds_per_quarter dta f(0)
 micro_seconds_per_delta_tick dta a(0)
-micro_seconds_per_delta_tick_pow dta b(0)
 ; MIDI track variables
 milli_seconds_per_delta_tick dta a(0)
 ; GETDELTA subroutine variables
