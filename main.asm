@@ -93,11 +93,7 @@ track_chunk.data equ track_chunk.length + 4 ;double word
     blk reloc main
     ; init
     CLD ; Clear decimal flag
-    ; Sound initialization
-    ; AUDCTL init
-    LDA #0
-    STA AUDCTL
-
+    
     ; Read cl parameter
     JSR U_GETPAR
     BNE openfile
@@ -499,10 +495,14 @@ RESETRTC
     RTS
 
 NOTEOFF
-    RTS
 ; Turn off MIDI note
 ; if midi_note is found playing
 ; in any voice channel then turn off   
+; Sound initialization
+    ; AUDCTL init
+    LDA #$01
+    STA AUDCTL
+; Play note
     LDA voice_1
     CMP midi_note_number
     BNE NOTEOFF_check_voice2
