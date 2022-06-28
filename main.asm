@@ -437,6 +437,13 @@ MAIN_0000_again
 ; Keep track of memory reads
     TYA
     JSR INCMIDIINDEX
+; If midi_command==$02F exit application
+; else continue
+    LDA #$2F
+    CMP midi_command
+    BNE MAIN_0001_continue
+    RTS ; END APPLICATION
+MAIN_0001_continue
 ; If midi_command != $51 exit switch
 ; else set tempo
     LDA #$51
@@ -1040,20 +1047,20 @@ voice_4 dta b($FF)
 ; MIDI calculated frequency value
 ; Already calculated, for fast performance
 midi_note equ *
-    dta b(243,243,243,243,243,243,243,243,243,243,243,243)
+    ; Octave 0
     dta b(243,243,243,243,243,243,243,243,243,243,243,243)
     ; Octave 1
     dta b(243,243,243,243,243,243,243,243,243,243,243,243)
     ; Octave 2
-    dta b(243,243,243,243,243,243,243,243,243,243,243,243)
-    ; Octave 3
     dta b(243,230,217,204,193,182,172,162,153,144,136,128)
-    ; Octave 4
+    ; Octave 3
     dta b(121,114,108,102, 96, 91, 85, 81, 76, 72, 68, 64)
-    ; Octave 5
+    ; Octave 4
     dta b( 60, 57, 53, 50, 47, 45, 42, 40, 37, 35, 33, 31)
-    ; Octave 6
+    ; Octave 5
     dta b( 30, 28, 26, 25, 23, 22, 21, 19, 18, 17, 16, 15)
+    ; Octave 6
+    dta b( 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15)
     ; Octave 7
     dta b( 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15)
     ; Octave 8
@@ -1061,8 +1068,6 @@ midi_note equ *
     ; Octave 9
     dta b( 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15)
     ; Octave 10
-    dta b( 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15)
-    ; Octave 11
     dta b( 15, 15, 15, 15, 15, 15, 15)
 ; MIDI buffer
 midi_meta_data equ *
