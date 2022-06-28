@@ -271,11 +271,6 @@ MAIN_0000_contine
     LDA delta_length
     JSR INCMIDIINDEX
 
-; Compare delta_milli_seconds with rtc
-; if lower waits
-; Reset RTC for delta comparition
-    JSR RESETRTC
-RTC_wait
 ; -------------------------
 ; Wait for next event START
 ; -------------------------
@@ -287,51 +282,43 @@ RTC_wait
 ; Wait for next event END
 ; -------------------------
 ; rtc=(milliseconds)RTC
-    LDA rtc_lsb
-    STA rtc
-    LDA rtc_mid
-    STA rtc+1
-    LDA rtc_msb
-    STA rtc+2
-    LDA #0
-    STA rtc+3
-    LDX #4
-RTC_again
-    CLC
-    ROL rtc
-    ROL rtc+1
-    ROL rtc+2
-    ROL rtc+3
-    DEX
-    BNE RTC_again
 
-    LDA rtc+3
-    CMP delta_milli_seconds+3
-    BCC RTC_wait
-    LDA rtc+2
-    CMP delta_milli_seconds+2
-    BCC RTC_wait
-    LDA rtc+1
-    CMP delta_milli_seconds+1
-    BCC RTC_wait
-    LDA rtc
-    CMP delta_milli_seconds       
-    BCC RTC_wait
-    
-    JSR PRINTF
-    dta c'RTC:%l'
-    dta b($9B,$00)
-    dta v(rtc)
-
-    JSR PRINTF
-    dta c'delta_milli_seconds:%l'
-    dta b($9B,$00)
-    dta v(delta_milli_seconds)
 
     ;JSR PRINTF
-    ;dta c'delta:%l'
+    ;dta c'delta_milli_seconds:%l'
     ;dta b($9B,$00)
-    ;dta v(delta_milli_seconds)
+    ;dta v(delta_milli_seconds)    
+
+    LDA #0
+    STA rtc_lsb
+RTC_wait_byte0
+    LDA #$F0
+    AND delta_milli_seconds
+    STA delta_milli_seconds
+    LDA rtc_lsb
+    CLC
+    ROL
+    CLC
+    ROL
+    CLC
+    ROL
+    CLC
+    ROL
+    CLC
+    CMP delta_milli_seconds
+    BCC RTC_wait_byte0
+    
+    
+    JSR PRINTF
+    dta c'RTC:%b'
+    dta b($9B,$00)
+    dta v(rtc_lsb)
+
+
+    JSR PRINTF
+    dta c'delta:%l'
+    dta b($9B,$00)
+    dta v(delta_milli_seconds)
 
 ; Point to next MIDI event commamnd
 ; pointer=block_pointer+midi_index
@@ -497,6 +484,26 @@ MAIN_exit_switch
 ; -------------------------
 ; Subroutines
 ; -------------------------
+UPDATERTC
+    LDA rtc_lsb
+    STA rtc
+    LDA rtc_mid
+    STA rtc+1
+    LDA rtc_msb
+    STA rtc+2
+    LDA #0
+    STA rtc+3
+    LDX #4
+RTC_again
+    CLC
+    ROL rtc
+    ROL rtc+1
+    ROL rtc+2
+    ROL rtc+3
+    DEX
+    BNE RTC_again
+    RTS
+
 RESETRTC
     LDA #0
     STA rtc_msb
