@@ -258,6 +258,7 @@ MAIN_0000_contine
     LDA delta_length
     JSR INCMIDIINDEX
 
+    JSR RESETRTC
 ; Compare delta_milli_seconds with rtc
 ; if lower waits
 RTC_wait
@@ -303,15 +304,15 @@ RTC_again
     CMP delta_milli_seconds        
     BMI RTC_wait
     
-    JSR PRINTF
-    dta c'RTC:%e'
-    dta b($9B,$00)
-    dta v(rtc)
+ ;   JSR PRINTF
+ ;   dta c'RTC:%e'
+ ;   dta b($9B,$00)
+ ;   dta v(rtc)
 
-    JSR PRINTF
-    dta c'delta:%l'
-    dta b($9B,$00)
-    dta v(delta_milli_seconds)
+ ;   JSR PRINTF
+ ;   dta c'delta:%l'
+ ;   dta b($9B,$00)
+ ;   dta v(delta_milli_seconds)
 
 ; Point to next MIDI event commamnd
 ; pointer=block_pointer+midi_index
@@ -329,9 +330,6 @@ RTC_again
 ; Save command to midi_command
 ; if midi_command!=$FF is a normal event/command
     STA midi_command
-; MIDI command read
-; Reset RTC to compare then with delta
-    JSR RESETRTC
 ; switch(A) {
     CMP #$FF
     BEQ MAIN_case_FF
@@ -482,19 +480,93 @@ RESETRTC
 
 NOTEOFF
 ; Turn off MIDI note
-; on midi_note table
-   LDA #$00
-   STA AUDC1
-   RTS
+; if midi_note is found playing
+; in any voice channel then turn off
+    LDA voice_1
+    CMP midi_note_number
+    BNE NOTEOFF_check_voice2
+    LDA #$FF
+    STX voice_1
+    LDA #$E0
+    STA AUDC1
+    JMP NOTEOFF_exit
+NOTEOFF_check_voice2
+    LDA voice_2
+    CMP midi_note_number
+    BNE NOTEOFF_check_voice3
+    LDA #$FF
+    STX voice_2
+    LDA #$E0
+    STA AUDC2
+    JMP NOTEOFF_exit
+NOTEOFF_check_voice3
+    LDA voice_3
+    CMP midi_note_number
+    BNE NOTEOFF_check_voice4
+    LDA #$FF
+    STX voice_3
+    LDA #$E0
+    STA AUDC3
+    JMP NOTEOFF_exit
+NOTEOFF_check_voice4
+    LDA voice_4
+    CMP midi_note_number
+    BNE NOTEOFF_exit
+    LDA #$FF
+    STX voice_4
+    LDA #$E0
+    STA AUDC4
+NOTEOFF_exit
+    RTS
 
 NOTEON
 ; Turn on MIDI note
-; on midi_note
+; on midi_note fequency table
+; if voice_x available turn on
+; else check next voice
+    LDA voice_1
+    CMP #$FF
+    BNE NOTEON_check_voice2
     LDX midi_note_number
+    STX voice_1
     LDA midi_note,X
     STA AUDF1    
     LDA #$EF
     STA AUDC1
+    JMP NOTEON_exit
+NOTEON_check_voice2
+    LDA voice_2
+    CMP #$FF
+    BNE NOTEON_check_voice3
+    LDX midi_note_number
+    STX voice_2
+    LDA midi_note,X
+    STA AUDF2
+    LDA #$EF
+    STA AUDC2
+    JMP NOTEON_exit
+NOTEON_check_voice3
+    LDA voice_3
+    CMP #$FF
+    BNE NOTEON_check_voice3
+    LDX midi_note_number
+    STX voice_3
+    LDA midi_note,X
+    STA AUDF3  
+    LDA #$EF
+    STA AUDC3
+    JMP NOTEON_exit
+NOTEON_check_voice4
+    LDA voice_4
+    CMP #$FF
+    BNE NOTEON_exit
+    LDX midi_note_number
+    STX voice_4
+    LDA midi_note,X
+    STA AUDF4 
+    LDA #$EF
+    STA AUDC4
+NOTEON_exit
     RTS
 
 SETTEMPO
@@ -969,6 +1041,13 @@ delta_length dta b(0)
 delta_milli_seconds dta f(0)
 ; Real Time Clock (RTC)
 rtc dta f(0)
+; ATARI voices note loaded
+; $FF means availabe
+; Other values means playing MIDI note
+voice_1 dta b($FF)
+voice_2 dta b($FF)
+voice_3 dta b($FF)
+voice_4 dta b($FF)
 ; MIDI calculated frequency value
 ; Already calculated, for fast performance
 midi_note equ *
@@ -994,7 +1073,6 @@ midi_note equ *
     dta b( 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15)
     ; Octave 11
     dta b( 15, 15, 15, 15, 15, 15, 15)
-
 ; MIDI buffer
 midi_meta_data equ *
     blk empty 256 main
