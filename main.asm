@@ -145,7 +145,8 @@ openfile JSR PRINTF
     dta b($9B,$00)
     RTS
 
-save_memory_block LDA faux1
+save_memory_block 
+    LDA faux1
     STA block_pointer
     LDA faux1+1
     STA block_pointer+1
@@ -220,6 +221,17 @@ load_success
 ; Important next procedure
 ; MAIN playback execution loop
 MAIN_next_delta
+
+
+    ;JSR PRINTF
+    ;dta c'block:%4x'
+    ;dta b($9B,$00)
+    ;dta v(block_size)
+    ;JSR PRINTF
+    ;dta c'index:%4x'
+    ;dta b($9B,$00)
+    ;dta v(midi_index)
+
 ; Checks if midi_index has reached
 ; end of memory block.
 ; if midi_index<block_length continue
@@ -227,7 +239,8 @@ MAIN_next_delta
     LDA midi_index+1
     CMP block_size+1
     BMI MAIN_0000_contine
-    BEQ MAIN_0000_next_comp
+    BEQ MAIN_0000_contine
+    JMP MAIN_0000_next_comp
     RTS
 MAIN_0000_next_comp
     LDA midi_index
@@ -486,6 +499,7 @@ RESETRTC
     RTS
 
 NOTEOFF
+    RTS
 ; Turn off MIDI note
 ; if midi_note is found playing
 ; in any voice channel then turn off   
@@ -555,7 +569,7 @@ NOTEON_check_voice2
 NOTEON_check_voice3
     LDA voice_3
     CMP #$FF
-    BNE NOTEON_check_voice3
+    BNE NOTEON_check_voice4
     LDX midi_note_number
     STX voice_3
     LDA midi_note,X
