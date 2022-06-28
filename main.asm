@@ -238,14 +238,14 @@ MAIN_next_delta
 ; else end
     LDA midi_index+1
     CMP block_size+1
-    BMI MAIN_0000_contine
+    BCC MAIN_0000_contine
     BEQ MAIN_0000_contine
     JMP MAIN_0000_next_comp
     RTS
 MAIN_0000_next_comp
     LDA midi_index
     CMP block_size
-    BMI MAIN_0000_contine
+    BCC MAIN_0000_contine
     RTS
 MAIN_0000_contine
 
@@ -271,9 +271,10 @@ MAIN_0000_contine
     LDA delta_length
     JSR INCMIDIINDEX
 
-    JSR RESETRTC
 ; Compare delta_milli_seconds with rtc
 ; if lower waits
+; Reset RTC for delta comparition
+    JSR RESETRTC
 RTC_wait
 ; -------------------------
 ; Wait for next event START
@@ -306,26 +307,31 @@ RTC_again
 
     LDA rtc+3
     CMP delta_milli_seconds+3
-    BMI RTC_wait
+    BCC RTC_wait
     LDA rtc+2
     CMP delta_milli_seconds+2
-    BMI RTC_wait
+    BCC RTC_wait
     LDA rtc+1
     CMP delta_milli_seconds+1
-    BMI RTC_wait
+    BCC RTC_wait
     LDA rtc
-    CMP delta_milli_seconds        
-    BMI RTC_wait
+    CMP delta_milli_seconds       
+    BCC RTC_wait
     
- ;   JSR PRINTF
- ;   dta c'RTC:%e'
- ;   dta b($9B,$00)
- ;   dta v(rtc)
+    JSR PRINTF
+    dta c'RTC:%l'
+    dta b($9B,$00)
+    dta v(rtc)
 
- ;   JSR PRINTF
- ;   dta c'delta:%l'
- ;   dta b($9B,$00)
- ;   dta v(delta_milli_seconds)
+    JSR PRINTF
+    dta c'delta_milli_seconds:%l'
+    dta b($9B,$00)
+    dta v(delta_milli_seconds)
+
+    ;JSR PRINTF
+    ;dta c'delta:%l'
+    ;dta b($9B,$00)
+    ;dta v(delta_milli_seconds)
 
 ; Point to next MIDI event commamnd
 ; pointer=block_pointer+midi_index
@@ -806,6 +812,11 @@ GETDELTA_end_delta_part_read
     LDA delta+3
     STA dword+3
 
+    ;JSR PRINTF
+    ;dta c'delta_length:%b'
+    ;dta b(' ',$00)
+    ;dta v(delta_length)
+
     LDA delta_length
     CMP #1
     BEQ MAIN_case_one
@@ -816,28 +827,33 @@ GETDELTA_end_delta_part_read
     CMP #3
     BEQ MAIN_case_three
 MAIN_case_four
-    LDA word+3
+    LDA dword+3
     STA delta
-    LDA word+2
+    LDA dword+2
     STA delta+1
-    LDA word+1
+    LDA dword+1
     STA delta+2
-    LDA word
+    LDA dword
     STA delta+3
 MAIN_case_three
-    LDA word+2
+    LDA dword+2
     STA delta
-    LDA word
+    LDA dword
     STA delta+2
     JMP MAIN_case_exit
 MAIN_case_two
-    LDA word+1
+    LDA dword+1
     STA delta
-    LDA word
+    LDA dword
     STA delta+1
     JMP MAIN_case_exit
 MAIN_case_one
 MAIN_case_exit
+
+    ;JSR PRINTF
+    ;dta c'delta:%l'
+    ;dta b(' ',$00)
+    ;dta v(delta)
 
 ; Sets shift_reg to 0xFF
     LDA $FF
