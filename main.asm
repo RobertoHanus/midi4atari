@@ -283,42 +283,63 @@ MAIN_0000_contine
 ; -------------------------
 ; rtc=(milliseconds)RTC
 
-
     ;JSR PRINTF
     ;dta c'delta_milli_seconds:%l'
     ;dta b($9B,$00)
     ;dta v(delta_milli_seconds)    
 
-    LDA #0
-    STA rtc_lsb
-RTC_wait_byte0
+;    LDA #0
+;    STA rtc_lsb
+;RTC_wait_byte0
+;    LDA #$F0
+;    AND delta_milli_seconds
+;    STA delta_milli_seconds
+;    LDA rtc_lsb
+;    CLC
+;    ROL
+;    CLC
+;    ROL
+;    CLC
+;    ROL
+;    CLC
+;    ROL
+;   CLC
+;    CMP delta_milli_seconds
+;    BCC RTC_wait_byte0
+
+; Zeroes nibble on delta_milli_seconds
+; to make it compatible with rtc
+; shifted left four bits from rtc_lsb
     LDA #$F0
     AND delta_milli_seconds
     STA delta_milli_seconds
-    LDA rtc_lsb
-    CLC
-    ROL
-    CLC
-    ROL
-    CLC
-    ROL
-    CLC
-    ROL
-    CLC
+
+    JSR RESETRTC
+RTC_update_again    
+    JSR UPDATERTC
+    LDA rtc+3
+    CMP delta_milli_seconds+3
+    BCC RTC_update_again
+    LDA rtc+2
+    CMP delta_milli_seconds+2
+    BCC RTC_update_again
+    LDA rtc+1
+    CMP delta_milli_seconds+1
+    BCC RTC_update_again
+    LDA rtc
     CMP delta_milli_seconds
-    BCC RTC_wait_byte0
+    BCC RTC_update_again    
     
-    
-    JSR PRINTF
-    dta c'RTC:%b'
-    dta b($9B,$00)
-    dta v(rtc_lsb)
+    ;JSR PRINTF
+    ;dta c'RTC:%b'
+    ;dta b($9B,$00)
+    ;dta v(rtc_lsb)
 
 
-    JSR PRINTF
-    dta c'delta:%l'
-    dta b($9B,$00)
-    dta v(delta_milli_seconds)
+    ;JSR PRINTF
+    ;dta c'delta:%l'
+    ;dta b($9B,$00)
+    ;dta v(delta_milli_seconds)
 
 ; Point to next MIDI event commamnd
 ; pointer=block_pointer+midi_index
